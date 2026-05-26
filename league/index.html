@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>리그전 대진표 - 바다쌤의 체육수업</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jua&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --card-hover: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --blue-team: #3b82f6;
+            --blue-glow: rgba(59, 130, 246, 0.4);
+            --red-team: #ef4444;
+            --red-glow: rgba(239, 68, 68, 0.4);
+            --champion-gold: #fbbf24;
+        }
+
+        body {
+            font-family: 'Jua', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 40px 20px;
+            color: var(--text-main);
+            text-align: center;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: var(--card-bg);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+            border: 1px solid #334155;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            margin-top: 0;
+            color: var(--text-main);
+            font-weight: 800;
+            letter-spacing: -1px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .setup-area {
+            margin-top: 30px;
+        }
+
+        /* 숫자 입력 스피너(화살표) 제거 및 스타일 */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        input[type="number"] {
+            padding: 12px;
+            font-size: 1.2rem;
+            width: 120px;
+            text-align: center;
+            background: #0f172a;
+            color: white;
+            border: 2px solid #334155;
+            border-radius: 8px;
+            margin: 20px 0;
+            font-family: 'Jua', sans-serif;
+            outline: none;
+            transition: border-color 0.2s;
+            -moz-appearance: textfield;
+        }
+
+        input[type="number"]:focus {
+            border-color: var(--blue-team);
+        }
+
+        /* 팀 수 조절 버튼 래퍼 스타일 추가 */
+        .team-count-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .team-count-wrapper input[type="number"] {
+            margin: 0; 
+            width: 80px;
+        }
+
+        .count-btn {
+            background-color: var(--card-bg);
+            color: var(--text-main);
+            border: 2px solid #334155;
+            border-radius: 8px;
+            width: 46px;
+            height: 46px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            font-family: 'Jua', sans-serif;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding-bottom: 2px;
+        }
+
+        .count-btn:hover {
+            border-color: var(--blue-team);
+            color: var(--blue-team);
+            background-color: var(--card-hover);
+        }
+
+        .btn {
+            padding: 12px 28px;
+            font-size: 1.1rem;
+            background-color: var(--blue-team);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-family: 'Jua', sans-serif;
+            margin: 5px;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background-color: #2563eb;
+            box-shadow: 0 0 15px var(--blue-glow);
+        }
+
+        .btn-secondary {
+            background-color: #475569;
+        }
+
+        .btn-secondary:hover {
+            background-color: #334155;
+            box-shadow: none;
+        }
+
+        /* 사용 방법 안내 박스 스타일 */
+        .instructions-box {
+            background: var(--bg-color);
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 24px 28px;
+            margin: 30px auto 0 auto;
+            text-align: left;
+            max-width: 95%;
+            width: 650px;
+            box-sizing: border-box;
+        }
+
+        .instructions-box h3 {
+            margin-top: 0;
+            color: var(--champion-gold);
+            font-size: 1.3rem;
+            margin-bottom: 14px;
+            text-align: center;
+        }
+
+        .instructions-box ol {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            line-height: 1.6;
+            padding-left: 20px;
+            margin: 0;
+        }
+
+        .instructions-box li {
+            margin-bottom: 8px;
+            word-break: keep-all;
+        }
+
+        .instructions-box li:last-child {
+            margin-bottom: 0;
+        }
+
+        .back-link {
+            display: inline-block;
+            margin-top: 40px;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+            cursor: pointer;
+        }
+
+        .back-link:hover {
+            color: white;
+            text-decoration: underline;
+        }
+
+        .league-container {
+            margin-top: 30px;
+        }
+
+        .league-layout {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+        }
+
+        .league-matches-col {
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .league-standings-col {
+            width: 100%;
+            max-width: 480px;
+        }
+
+        .round-label {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--blue-team), #8b5cf6);
+            color: white;
+            padding: 8px 24px;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            margin: 24px 0 14px 0;
+            box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+        }
+
+        .league-match-card {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 14px;
+            padding: 14px 16px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+
+        .league-match-card:hover {
+            border-color: #475569;
+        }
+
+        .league-match-card.match-done {
+            border-color: #334155;
+        }
+
+        .lm-team {
+            flex: 1;
+            padding: 8px 4px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.95rem;
+            font-weight: 600;
+            text-align: center;
+            min-width: 60px;
+        }
+
+        .lm-team:hover {
+            transform: scale(1.05);
+        }
+
+        .lm-team-left {
+            color: var(--blue-team);
+        }
+
+        .lm-team-right {
+            color: var(--red-team);
+        }
+
+        .lm-team.lm-win {
+            background: rgba(74, 222, 128, 0.15);
+            color: #4ade80;
+            border-radius: 8px;
+        }
+
+        .lm-team.lm-lose {
+            opacity: 0.35;
+            text-decoration: line-through;
+        }
+
+        .lm-team.lm-draw-state {
+            background: rgba(251, 191, 36, 0.1);
+            color: var(--champion-gold);
+        }
+
+        .lm-middle-col {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .lm-scores {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .lm-score-input {
+            width: 36px;
+            height: 36px;
+            text-align: center;
+            font-size: 1.1rem;
+            font-family: 'Jua', sans-serif;
+            background: var(--card-bg);
+            color: white;
+            border: 2px solid #334155;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .lm-score-input:focus {
+            border-color: var(--blue-team);
+        }
+
+        .lm-colon {
+            color: #475569;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .lm-draw-btn {
+            padding: 4px 10px;
+            font-size: 0.72rem;
+            font-family: 'Jua', sans-serif;
+            background: transparent;
+            color: var(--champion-gold);
+            border: 1.5px solid var(--champion-gold);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            white-space: nowrap;
+        }
+
+        .lm-draw-btn:hover {
+            background: rgba(251, 191, 36, 0.15);
+        }
+
+        .lm-draw-btn.active {
+            background: var(--champion-gold);
+            color: #0f172a;
+        }
+
+        .standings-box {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 16px;
+            overflow: hidden;
+        }
+
+        .standings-title {
+            padding: 14px;
+            font-size: 1.15rem;
+            background: linear-gradient(135deg, #1e293b, #334155);
+            border-bottom: 1px solid #334155;
+        }
+
+        .standings-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.82rem;
+        }
+
+        .standings-table th {
+            padding: 10px 5px;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.72rem;
+            border-bottom: 1px solid #1e293b;
+            background: #0c1322;
+        }
+
+        .standings-table td {
+            padding: 10px 5px;
+            border-bottom: 1px solid #1a2332;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .standings-table tr {
+            transition: background 0.3s;
+        }
+
+        .standings-table tbody tr:hover {
+            background: rgba(59, 130, 246, 0.05);
+        }
+
+        .rank-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .rank-1 {
+            background: var(--champion-gold);
+            color: #0f172a;
+        }
+
+        .rank-2 {
+            background: #94a3b8;
+            color: #0f172a;
+        }
+
+        .rank-3 {
+            background: #b45309;
+            color: white;
+        }
+
+        .rank-other {
+            background: #1e293b;
+            color: #64748b;
+        }
+
+        .pts-cell {
+            font-size: 1rem;
+            font-weight: bold;
+            color: var(--champion-gold);
+        }
+
+        .gd-plus { color: #4ade80; }
+        .gd-minus { color: #f87171; }
+        .gd-zero { color: #64748b; }
+
+        .league-summary {
+            padding: 16px;
+            background: #0f172a;
+            border-radius: 14px;
+            border: 1px solid #334155;
+            margin-bottom: 20px;
+        }
+
+        .league-summary span {
+            color: var(--champion-gold);
+            font-size: 1.3rem;
+        }
+
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade {
+            animation: fadeSlideUp 0.4s ease forwards;
+        }
+
+        @keyframes rankShift {
+            0% { background: rgba(251,191,36,0.15); }
+            100% { background: transparent; }
+        }
+        .rank-changed {
+            animation: rankShift 0.6s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- 홈: 팀 수 입력 -->
+        <div id="view-home">
+            <h1>⚽🏀⚾ 리그전 대진표 만들기</h1>
+            <p style="color: var(--text-muted);">참가 팀 수를 입력해 주세요.</p>
+            
+            <div class="team-count-wrapper">
+                <button class="count-btn" onclick="adjustTeamCount(-1)">-</button>
+                <input type="number" id="team-count" min="2" max="32" value="4">
+                <button class="count-btn" onclick="adjustTeamCount(1)">+</button>
+            </div>
+            
+            <br>
+            <button class="btn" onclick="generateLeague()">대진표 생성</button>
+
+            <!-- 사용 방법 안내 블럭 추가 -->
+            <div class="instructions-box">
+                <h3>📖 사용 방법</h3>
+                <ol>
+                    <li>리그전에 참가할 팀 수를 선택해 주세요.</li>
+                    <li>승리한 팀을 터치(클릭)하면 승점이 자동으로 계산됩니다.</li>
+                    <li>득점과 실점 기록이 필요한 경우, 점수창에 직접 입력할 수 있습니다.</li>
+                </ol>
+            </div>
+            
+            <br>
+            <a class="back-link" href="../index.php">&larr; 홈으로 돌아가기</a>
+        </div>
+
+        <!-- 리그전 화면 -->
+        <div id="view-league" class="hidden">
+            <h2>📊 리그전 대진표</h2>
+            <div id="league-render-area" class="league-container"></div>
+            <button class="btn btn-secondary" style="margin-top:30px;" onclick="showHome()">← 처음으로</button>
+        </div>
+    </div>
+
+    <script>
+        function showHome() {
+            document.getElementById('view-home').classList.remove('hidden');
+            document.getElementById('view-league').classList.add('hidden');
+        }
+
+        function adjustTeamCount(delta) {
+            const input = document.getElementById('team-count');
+            let current = parseInt(input.value, 10) || 2;
+            let next = current + delta;
+            if (next < 2) next = 2;
+            if (next > 32) next = 32;
+            input.value = next;
+        }
+
+        // 팀 번호를 A, B, C... 영문 알파벳으로 변환해주는 함수
+        function getTeamLetter(num) {
+            let name = '';
+            let a = num;
+            while (a > 0) {
+                let rem = (a - 1) % 26;
+                name = String.fromCharCode(65 + rem) + name;
+                a = Math.floor((a - 1) / 26);
+            }
+            return name;
+        }
+
+        function generateLeague() {
+            const count = parseInt(document.getElementById('team-count').value, 10);
+            if (count < 2 || isNaN(count)) return;
+
+            const area = document.getElementById('league-render-area');
+            area.innerHTML = '';
+            renderLeague(count, area);
+
+            document.getElementById('view-home').classList.add('hidden');
+            document.getElementById('view-league').classList.remove('hidden');
+        }
+
+        let leagueMatchData = [];
+        let leagueTeamCount = 0;
+
+        function generateRoundRobin(n) {
+            const teams = [];
+            for (let i = 1; i <= n; i++) teams.push(i);
+            const hasBye = n % 2 !== 0;
+            if (hasBye) teams.push(0);
+            const total = teams.length;
+            const rounds = [];
+            const fixed = teams[0];
+            const rotating = teams.slice(1);
+
+            for (let round = 0; round < total - 1; round++) {
+                const matches = [];
+                const current = [fixed, ...rotating];
+                for (let i = 0; i < total / 2; i++) {
+                    const a = current[i];
+                    const b = current[total - 1 - i];
+                    if (a !== 0 && b !== 0) matches.push([a, b]);
+                }
+                rounds.push(matches);
+                rotating.push(rotating.shift());
+            }
+            return rounds;
+        }
+
+        function renderLeague(teamCount, container) {
+            leagueTeamCount = teamCount;
+            leagueMatchData = [];
+            const rounds = generateRoundRobin(teamCount);
+            const totalMatches = teamCount * (teamCount - 1) / 2;
+
+            const summary = document.createElement('div');
+            summary.className = 'league-summary animate-fade';
+            summary.innerHTML = '<span>총 ' + totalMatches + '경기</span>  ·  ' + teamCount + '팀  ·  ' + rounds.length + '라운드';
+            container.appendChild(summary);
+
+            const layout = document.createElement('div');
+            layout.className = 'league-layout';
+
+            const matchesCol = document.createElement('div');
+            matchesCol.className = 'league-matches-col';
+
+            const standingsCol = document.createElement('div');
+            standingsCol.className = 'league-standings-col';
+
+            const standingsBox = document.createElement('div');
+            standingsBox.className = 'standings-box';
+            standingsBox.innerHTML = '<div class="standings-title">🏅 실시간 순위</div>';
+            const tableWrap = document.createElement('div');
+            tableWrap.id = 'standings-table-wrap';
+            standingsBox.appendChild(tableWrap);
+            standingsCol.appendChild(standingsBox);
+
+            let matchIdx = 0;
+            rounds.forEach(function(matches, rIdx) {
+                const label = document.createElement('div');
+                label.className = 'round-label animate-fade';
+                label.style.animationDelay = (rIdx * 0.05) + 's';
+                label.innerText = (rIdx + 1) + ' 라운드';
+                matchesCol.appendChild(label);
+
+                matches.forEach(function(pair, mi) {
+                    const idx = matchIdx++;
+                    leagueMatchData.push({ id: idx, t1: pair[0], t2: pair[1], s1: null, s2: null, played: false });
+
+                    const card = document.createElement('div');
+                    card.className = 'league-match-card animate-fade';
+                    card.id = 'lm-card-' + idx;
+                    card.style.animationDelay = (rIdx * 0.05 + mi * 0.03) + 's';
+
+                    const t1 = document.createElement('div');
+                    t1.className = 'lm-team lm-team-left';
+                    t1.id = 'lm-t1-' + idx;
+                    // 숫자를 알파벳으로 변환하여 적용
+                    t1.innerText = 'Team ' + getTeamLetter(pair[0]);
+                    t1.onclick = function() { quickWin(idx, 1); };
+
+                    const middleCol = document.createElement('div');
+                    middleCol.className = 'lm-middle-col';
+
+                    const drawBtn = document.createElement('button');
+                    drawBtn.className = 'lm-draw-btn';
+                    drawBtn.id = 'lm-draw-' + idx;
+                    drawBtn.innerText = '무승부';
+                    drawBtn.onclick = function() { setDraw(idx); };
+
+                    const scores = document.createElement('div');
+                    scores.className = 'lm-scores';
+
+                    const inp1 = document.createElement('input');
+                    inp1.type = 'number';
+                    inp1.className = 'lm-score-input';
+                    inp1.id = 'lm-s1-' + idx;
+                    inp1.min = 0;
+                    inp1.placeholder = '-';
+                    inp1.oninput = function() { onScoreInput(idx); };
+
+                    const colon = document.createElement('span');
+                    colon.className = 'lm-colon';
+                    colon.innerText = ':';
+
+                    const inp2 = document.createElement('input');
+                    inp2.type = 'number';
+                    inp2.className = 'lm-score-input';
+                    inp2.id = 'lm-s2-' + idx;
+                    inp2.min = 0;
+                    inp2.placeholder = '-';
+                    inp2.oninput = function() { onScoreInput(idx); };
+
+                    scores.appendChild(inp1);
+                    scores.appendChild(colon);
+                    scores.appendChild(inp2);
+
+                    middleCol.appendChild(drawBtn);
+                    middleCol.appendChild(scores);
+
+                    const t2 = document.createElement('div');
+                    t2.className = 'lm-team lm-team-right';
+                    t2.id = 'lm-t2-' + idx;
+                    // 숫자를 알파벳으로 변환하여 적용
+                    t2.innerText = 'Team ' + getTeamLetter(pair[1]);
+                    t2.onclick = function() { quickWin(idx, 2); };
+
+                    card.appendChild(t1);
+                    card.appendChild(middleCol);
+                    card.appendChild(t2);
+                    matchesCol.appendChild(card);
+                });
+            });
+
+            layout.appendChild(standingsCol);
+            layout.appendChild(matchesCol);
+            container.appendChild(layout);
+
+            refreshStandings();
+        }
+
+        function quickWin(idx, winner) {
+            const m = leagueMatchData[idx];
+            const inp1 = document.getElementById('lm-s1-' + idx);
+            const inp2 = document.getElementById('lm-s2-' + idx);
+
+            if (winner === 1) {
+                inp1.value = 1;
+                inp2.value = 0;
+                m.s1 = 1; m.s2 = 0;
+            } else {
+                inp1.value = 0;
+                inp2.value = 1;
+                m.s1 = 0; m.s2 = 1;
+            }
+            m.played = true;
+            applyMatchStyle(idx);
+            refreshStandings();
+        }
+
+        function setDraw(idx) {
+            const m = leagueMatchData[idx];
+            const inp1 = document.getElementById('lm-s1-' + idx);
+            const inp2 = document.getElementById('lm-s2-' + idx);
+            inp1.value = 0;
+            inp2.value = 0;
+            m.s1 = 0; m.s2 = 0;
+            m.played = true;
+            applyMatchStyle(idx);
+            refreshStandings();
+        }
+
+        function onScoreInput(idx) {
+            const m = leagueMatchData[idx];
+            const v1 = document.getElementById('lm-s1-' + idx).value;
+            const v2 = document.getElementById('lm-s2-' + idx).value;
+
+            if (v1 !== '' && v2 !== '') {
+                m.s1 = parseInt(v1) || 0;
+                m.s2 = parseInt(v2) || 0;
+                m.played = true;
+            } else {
+                m.s1 = null; m.s2 = null;
+                m.played = false;
+            }
+            applyMatchStyle(idx);
+            refreshStandings();
+        }
+
+        function applyMatchStyle(idx) {
+            const m = leagueMatchData[idx];
+            const t1 = document.getElementById('lm-t1-' + idx);
+            const t2 = document.getElementById('lm-t2-' + idx);
+            const drawBtn = document.getElementById('lm-draw-' + idx);
+            const card = document.getElementById('lm-card-' + idx);
+
+            t1.classList.remove('lm-win', 'lm-lose', 'lm-draw-state');
+            t2.classList.remove('lm-win', 'lm-lose', 'lm-draw-state');
+            drawBtn.classList.remove('active');
+            card.classList.remove('match-done');
+
+            if (!m.played) return;
+
+            card.classList.add('match-done');
+
+            if (m.s1 > m.s2) {
+                t1.classList.add('lm-win');
+                t2.classList.add('lm-lose');
+            } else if (m.s1 < m.s2) {
+                t2.classList.add('lm-win');
+                t1.classList.add('lm-lose');
+            } else {
+                t1.classList.add('lm-draw-state');
+                t2.classList.add('lm-draw-state');
+                drawBtn.classList.add('active');
+            }
+        }
+
+        function refreshStandings() {
+            const stats = {};
+            for (let i = 1; i <= leagueTeamCount; i++) {
+                stats[i] = { team: i, played: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, gd: 0, pts: 0 };
+            }
+
+            leagueMatchData.forEach(function(m) {
+                if (!m.played) return;
+                var a = stats[m.t1], b = stats[m.t2];
+                a.played++; b.played++;
+                a.gf += m.s1; a.ga += m.s2;
+                b.gf += m.s2; b.ga += m.s1;
+                if (m.s1 > m.s2) { a.w++; b.l++; a.pts += 3; }
+                else if (m.s1 < m.s2) { b.w++; a.l++; b.pts += 3; }
+                else { a.d++; b.d++; a.pts += 1; b.pts += 1; }
+            });
+
+            var arr = Object.values(stats);
+            arr.forEach(function(s) { s.gd = s.gf - s.ga; });
+            arr.sort(function(a, b) {
+                if (b.pts !== a.pts) return b.pts - a.pts;
+                if (b.gd !== a.gd) return b.gd - a.gd;
+                return b.gf - a.gf;
+            });
+
+            var html = '<table class="standings-table"><thead><tr>' +
+                '<th>#</th><th>팀</th><th>경기</th><th>승</th><th>무</th><th>패</th>' +
+                '<th>득</th><th>실</th><th>득실</th><th>승점</th>' +
+                '</tr></thead><tbody>';
+
+            arr.forEach(function(s, i) {
+                var rank = i + 1;
+                var rc = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : 'rank-other';
+                var gdClass = s.gd > 0 ? 'gd-plus' : s.gd < 0 ? 'gd-minus' : 'gd-zero';
+                var gdStr = s.gd > 0 ? '+' + s.gd : '' + s.gd;
+
+                html += '<tr class="rank-changed">' +
+                    '<td><span class="rank-badge ' + rc + '">' + rank + '</span></td>' +
+                    // 순위표에도 알파벳으로 표시되도록 수정
+                    '<td style="text-align:left;padding-left:8px;">Team ' + getTeamLetter(s.team) + '</td>' +
+                    '<td>' + s.played + '</td>' +
+                    '<td>' + s.w + '</td>' +
+                    '<td>' + s.d + '</td>' +
+                    '<td>' + s.l + '</td>' +
+                    '<td>' + s.gf + '</td>' +
+                    '<td>' + s.ga + '</td>' +
+                    '<td class="' + gdClass + '">' + gdStr + '</td>' +
+                    '<td class="pts-cell">' + s.pts + '</td>' +
+                    '</tr>';
+            });
+
+            html += '</tbody></table>';
+            document.getElementById('standings-table-wrap').innerHTML = html;
+        }
+    </script>
+</body>
+</html>

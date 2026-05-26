@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>토너먼트 대진표</title>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg-dark: #0a0a0f;
+    --bg-card: #12121a;
+    --bg-surface: #1a1a28;
+    --red: #e63946;
+    --red-glow: rgba(230, 57, 70, 0.4);
+    --red-dim: rgba(230, 57, 70, 0.15);
+    --blue: #4895ef;
+    --blue-glow: rgba(72, 149, 239, 0.4);
+    --blue-dim: rgba(72, 149, 239, 0.15);
+    --text: #e8e8f0;
+    --text-dim: #6e6e85;
+    --border: #2a2a3d;
+    --gold: #ffd700;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg-dark);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    min-height: 100vh;
+    overflow-x: auto;
+  }
+
+  /* ── Background effects ── */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background:
+      radial-gradient(ellipse at 20% 20%, var(--red-dim) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 80%, var(--blue-dim) 0%, transparent 50%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container {
+    position: relative;
+    z-index: 1;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 40px 20px;
+  }
+
+  /* ── SETUP SCREEN ── */
+  #setup-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 80vh;
+    animation: fadeIn 0.6s ease;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .logo-area {
+    text-align: center;
+    margin-bottom: 50px;
+  }
+
+  .logo-icon {
+    width: 80px; height: 80px;
+    margin: 0 auto 20px;
+    position: relative;
+  }
+
+  .logo-icon::before, .logo-icon::after {
+    content: '';
+    position: absolute;
+    width: 36px; height: 36px;
+    border-radius: 6px;
+    top: 50%; left: 50%;
+  }
+
+  .logo-icon::before {
+    background: var(--red);
+    transform: translate(-70%, -50%) rotate(12deg);
+    box-shadow: 0 0 25px var(--red-glow);
+  }
+
+  .logo-icon::after {
+    background: var(--blue);
+    transform: translate(-30%, -50%) rotate(-12deg);
+    box-shadow: 0 0 25px var(--blue-glow);
+  }
+
+  .logo-title {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 42px;
+    letter-spacing: 2px;
+    background: linear-gradient(135deg, var(--red), #fff 50%, var(--blue));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .logo-sub {
+    color: var(--text-dim);
+    font-size: 14px;
+    margin-top: 6px;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+  }
+
+  .team-selector {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 50px;
+    text-align: center;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  }
+
+  .team-selector label {
+    display: block;
+    font-size: 16px;
+    color: var(--text-dim);
+    margin-bottom: 24px;
+    letter-spacing: 1px;
+  }
+
+  .counter-row {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    justify-content: center;
+    margin-bottom: 30px;
+  }
+
+  .counter-btn {
+    width: 56px; height: 56px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    background: var(--bg-surface);
+    color: var(--text);
+    font-size: 28px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    user-select: none;
+  }
+
+  .counter-btn:hover {
+    border-color: var(--blue);
+    box-shadow: 0 0 15px var(--blue-glow);
+    transform: scale(1.08);
+  }
+
+  .counter-btn.minus:hover {
+    border-color: var(--red);
+    box-shadow: 0 0 15px var(--red-glow);
+  }
+
+  .counter-btn:active { transform: scale(0.95); }
+
+  .team-input {
+    width: 100px;
+    text-align: center;
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 48px;
+    background: transparent;
+    border: none;
+    border-bottom: 3px solid var(--border);
+    color: var(--text);
+    outline: none;
+    transition: border-color 0.3s;
+  }
+
+  .team-input:focus { border-color: var(--blue); }
+
+  .generate-btn {
+    background: linear-gradient(135deg, var(--red), #c1121f);
+    color: #fff;
+    border: none;
+    padding: 16px 52px;
+    font-size: 18px;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 700;
+    border-radius: 12px;
+    cursor: pointer;
+    letter-spacing: 2px;
+    transition: all 0.3s;
+    box-shadow: 0 6px 25px rgba(230, 57, 70, 0.3);
+  }
+
+  .generate-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 35px rgba(230, 57, 70, 0.5);
+  }
+
+  .generate-btn:active { transform: translateY(0); }
+
+  .home-link {
+    display: inline-block;
+    margin-top: 40px;
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 14px;
+    letter-spacing: 1px;
+    transition: color 0.3s;
+    padding: 8px 16px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+  }
+
+  .home-link:hover {
+    color: var(--blue);
+    border-color: var(--blue-dim);
+  }
+
+  /* ── BRACKET SCREEN ── */
+  #bracket-screen {
+    display: none;
+    animation: fadeIn 0.5s ease;
+  }
+
+  .bracket-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .bracket-title {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 28px;
+  }
+
+  .bracket-actions {
+    display: flex;
+    gap: 12px;
+  }
+
+  .action-btn {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 10px 22px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 14px;
+    transition: all 0.2s;
+  }
+
+  .action-btn:hover {
+    border-color: var(--blue);
+    box-shadow: 0 0 12px var(--blue-glow);
+  }
+
+  .action-btn.reset:hover {
+    border-color: var(--red);
+    box-shadow: 0 0 12px var(--red-glow);
+  }
+
+  /* ── BRACKET LAYOUT (left-to-right) ── */
+  .bracket-container {
+    display: flex;
+    flex-direction: row;
+    gap: 0;
+    overflow-x: auto;
+    padding-bottom: 20px;
+    align-items: stretch;
+  }
+
+  .round {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 200px;
+    gap: 0;
+    position: relative;
+  }
+
+  .round-label {
+    text-align: center;
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 16px;
+    font-weight: 700;
+  }
+
+  .match-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    padding: 8px 12px;
+  }
+
+  .match {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    width: 180px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    transition: all 0.25s;
+  }
+
+  .match:hover {
+    border-color: #444;
+    box-shadow: 0 6px 25px rgba(0,0,0,0.5);
+  }
+
+  .match-team {
+    display: flex;
+    align-items: center;
+    padding: 0;
+    cursor: pointer;
+    transition: background 0.2s;
+    position: relative;
+  }
+
+  .match-team:first-child { border-bottom: 1px solid var(--border); }
+
+  .match-team:hover { background: var(--bg-surface); }
+
+  .team-color-bar {
+    width: 4px;
+    height: 100%;
+    min-height: 38px;
+    flex-shrink: 0;
+  }
+
+  .match-team:first-child .team-color-bar { background: var(--red); }
+  .match-team:last-child .team-color-bar { background: var(--blue); }
+
+  .team-name-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-size: 13px;
+    font-family: 'Noto Sans KR', sans-serif;
+    padding: 10px 10px;
+    outline: none;
+    width: 100%;
+  }
+
+  .team-name-input::placeholder { color: var(--text-dim); }
+
+  .team-name-input.bye-team {
+    color: var(--text-dim);
+    font-style: italic;
+    pointer-events: none;
+  }
+
+  .match-team.winner { background: rgba(255,215,0,0.06); }
+  .match-team.winner .team-name-input { color: var(--gold); font-weight: 700; }
+
+  .match-team.winner:first-child .team-color-bar {
+    background: var(--gold);
+    box-shadow: 0 0 8px rgba(255,215,0,0.4);
+  }
+  .match-team.winner:last-child .team-color-bar {
+    background: var(--gold);
+    box-shadow: 0 0 8px rgba(255,215,0,0.4);
+  }
+
+  /* ── CHAMPION ── */
+  .champion-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-width: 180px;
+    padding: 20px;
+  }
+
+  .champion-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 12px;
+  }
+
+  .champion-display {
+    background: linear-gradient(135deg, rgba(255,215,0,0.1), rgba(255,215,0,0.02));
+    border: 2px solid rgba(255,215,0,0.3);
+    border-radius: 14px;
+    padding: 20px 30px;
+    text-align: center;
+    min-width: 150px;
+  }
+
+  .champion-name {
+    font-family: 'Black Han Sans', sans-serif;
+    font-size: 22px;
+    color: var(--gold);
+  }
+
+  .trophy { font-size: 36px; margin-bottom: 8px; }
+
+  /* ── SHUFFLE ANIMATION ── */
+  @keyframes shufflePop {
+    0% { transform: scale(0.8); opacity: 0; }
+    60% { transform: scale(1.05); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  .match.shuffle-anim {
+    animation: shufflePop 0.4s ease forwards;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .logo-title { font-size: 30px; }
+    .team-selector { padding: 30px 25px; }
+    .team-input { font-size: 36px; width: 80px; }
+    .counter-btn { width: 46px; height: 46px; font-size: 22px; }
+    .round { min-width: 160px; }
+    .match { width: 150px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+  <div id="setup-screen">
+    <div class="logo-area">
+      <div class="logo-icon"></div>
+      <div class="logo-title">TOURNAMENT</div>
+      <div class="logo-sub">대진표 생성기</div>
+    </div>
+
+    <div class="team-selector">
+      <label>참가 팀 수를 입력하세요 (2~32)</label>
+      <div class="counter-row">
+        <button class="counter-btn minus" onclick="adjustTeams(-1)">−</button>
+        <input type="text" id="teamCount" class="team-input" value="8"
+               oninput="clampTeams()" inputmode="numeric" pattern="[0-9]*">
+        <button class="counter-btn" onclick="adjustTeams(1)">+</button>
+      </div>
+      <button class="generate-btn" onclick="generateBracket()">대진표 생성</button>
+    </div>
+
+    <a href="../index.php" class="home-link">← 홈으로 돌아가기</a>
+  </div>
+
+  <div id="bracket-screen">
+    <div class="bracket-header">
+      <div class="bracket-title" id="bracketTitle">8팀 토너먼트</div>
+      <div class="bracket-actions">
+        <button class="action-btn" onclick="shuffleTeams()">🔀 셔플</button>
+        <button class="action-btn reset" onclick="backToSetup()">← 다시 설정</button>
+      </div>
+    </div>
+    <div class="bracket-container" id="bracketContainer"></div>
+  </div>
+</div>
+
+<script>
+  function adjustTeams(delta) {
+    const input = document.getElementById('teamCount');
+    let val = parseInt(input.value) || 2;
+    val = Math.min(32, Math.max(2, val + delta));
+    input.value = val;
+  }
+
+  function clampTeams() {
+    const input = document.getElementById('teamCount');
+    let val = parseInt(input.value) || 2;
+    input.value = Math.min(32, Math.max(2, val));
+  }
+
+  // Next power of 2
+  function nextPow2(n) {
+    let p = 1;
+    while (p < n) p *= 2;
+    return p;
+  }
+
+  // Round label name
+  function getRoundName(totalRounds, roundIndex) {
+    const remaining = totalRounds - roundIndex;
+    if (remaining === 1) return '결승';
+    if (remaining === 2) return '준결승';
+    if (remaining === 3) return '8강';
+    const n = Math.pow(2, remaining);
+    return n + '강';
+  }
+
+  let bracketData = null;
+
+  function generateBracket() {
+    const teamCount = parseInt(document.getElementById('teamCount').value) || 2;
+    const totalSlots = nextPow2(teamCount);
+    const totalRounds = Math.log2(totalSlots);
+    const byeCount = totalSlots - teamCount;
+
+    // Seed positions for byes (spread evenly)
+    const seeds = [];
+    for (let i = 0; i < totalSlots; i++) seeds.push(i);
+
+    // Create team labels
+    const teamLabels = [];
+    for (let i = 0; i < totalSlots; i++) teamLabels.push(null);
+
+    // Place real teams and byes
+    const byePositions = new Set();
+    if (byeCount > 0) {
+      const seedOrder = getBracketOrder(totalSlots);
+      for (let i = 0; i < byeCount; i++) {
+        byePositions.add(seedOrder[totalSlots - 1 - i]);
+      }
+    }
+
+    let teamNum = 1;
+    for (let i = 0; i < totalSlots; i++) {
+      if (byePositions.has(i)) {
+        teamLabels[i] = { name: 'BYE', isBye: true };
+      } else {
+        teamLabels[i] = { name: '팀 ' + teamNum, isBye: false };
+        teamNum++;
+      }
+    }
+
+    bracketData = {
+      teamCount,
+      totalSlots,
+      totalRounds,
+      teamLabels,
+      byePositions
+    };
+
+    renderBracket();
+
+    document.getElementById('setup-screen').style.display = 'none';
+    document.getElementById('bracket-screen').style.display = 'block';
+    document.getElementById('bracketTitle').textContent = teamCount + '팀 토너먼트';
+  }
+
+  function getBracketOrder(n) {
+    if (n === 1) return [0];
+    const half = getBracketOrder(n / 2);
+    const result = [];
+    for (const h of half) {
+      result.push(h);
+      result.push(n - 1 - h);
+    }
+    return result;
+  }
+
+  const AudioCtx = window.AudioContext || window.webkitAudioContext;
+  let audioCtx = null;
+  function getAudioCtx() {
+    if (!audioCtx) audioCtx = new AudioCtx();
+    return audioCtx;
+  }
+
+  function playSelectSound() {
+    try {
+      const ctx = getAudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(600, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(900, ctx.currentTime + 0.08);
+      gain.gain.setValueAtTime(0.15, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.15);
+    } catch(e) {}
+  }
+
+  function playAdvanceSound() {
+    try {
+      const ctx = getAudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(500, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1000, ctx.currentTime + 0.12);
+      osc.frequency.exponentialRampToValueAtTime(1200, ctx.currentTime + 0.2);
+      gain.gain.setValueAtTime(0.12, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.25);
+      osc.start(ctx.currentTime);
+      osc.stop(ctx.currentTime + 0.25);
+    } catch(e) {}
+  }
+
+  function playChampionSound() {
+    try {
+      const ctx = getAudioCtx();
+      const notes = [523, 659, 784, 1047];
+      notes.forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        const t = ctx.currentTime + i * 0.12;
+        gain.gain.setValueAtTime(0, t);
+        gain.gain.linearRampToValueAtTime(0.15, t + 0.03);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+        osc.start(t);
+        osc.stop(t + 0.4);
+      });
+    } catch(e) {}
+  }
+
+  function playShuffleSound() {
+    try {
+      const ctx = getAudioCtx();
+      for (let i = 0; i < 5; i++) {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'square';
+        osc.frequency.value = 300 + Math.random() * 400;
+        const t = ctx.currentTime + i * 0.05;
+        gain.gain.setValueAtTime(0.06, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.06);
+        osc.start(t);
+        osc.stop(t + 0.06);
+      }
+    } catch(e) {}
+  }
+
+  function renderBracket() {
+    const { totalSlots, totalRounds, teamLabels, byePositions } = bracketData;
+    const container = document.getElementById('bracketContainer');
+    container.innerHTML = '';
+
+    const rounds = [];
+    const r0 = [];
+    for (let i = 0; i < totalSlots; i += 2) {
+      const t1 = teamLabels[i];
+      const t2 = teamLabels[i + 1];
+      const isByeMatch = t1.isBye || t2.isBye;
+      r0.push({
+        team1: t1,
+        team2: t2,
+        isByeMatch,
+        winner: isByeMatch ? (t1.isBye ? 1 : 0) : null
+      });
+    }
+    rounds.push(r0);
+
+    for (let r = 1; r < totalRounds; r++) {
+      const prevRound = rounds[r - 1];
+      const thisRound = [];
+      for (let i = 0; i < prevRound.length; i += 2) {
+        const m1 = prevRound[i];
+        const m2 = prevRound[i + 1];
+        const adv1 = (m1.winner !== null) ? (m1.winner === 0 ? m1.team1 : m1.team2) : null;
+        const adv2 = (m2.winner !== null) ? (m2.winner === 0 ? m2.team1 : m2.team2) : null;
+        const t1 = adv1 ? { name: adv1.name, isBye: false } : { name: '', isBye: false, placeholder: true };
+        const t2 = adv2 ? { name: adv2.name, isBye: false } : { name: '', isBye: false, placeholder: true };
+        thisRound.push({
+          team1: t1,
+          team2: t2,
+          isByeMatch: false,
+          winner: null
+        });
+      }
+      rounds.push(thisRound);
+    }
+
+    rounds.forEach((round, rIdx) => {
+      const roundEl = document.createElement('div');
+      roundEl.className = 'round';
+      roundEl.dataset.round = rIdx;
+
+      const label = document.createElement('div');
+      label.className = 'round-label';
+      label.textContent = getRoundName(totalRounds, rIdx);
+      roundEl.appendChild(label);
+
+      const matchesWrap = document.createElement('div');
+      matchesWrap.style.display = 'flex';
+      matchesWrap.style.flexDirection = 'column';
+      matchesWrap.style.justifyContent = 'space-around';
+      matchesWrap.style.flex = '1';
+      matchesWrap.style.gap = (rIdx === 0 ? 12 : 0) + 'px';
+
+      round.forEach((match, mIdx) => {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'match-wrapper';
+        const matchEl = document.createElement('div');
+        matchEl.className = 'match';
+        matchEl.dataset.round = rIdx;
+        matchEl.dataset.match = mIdx;
+
+        const t1El = createTeamEl(match.team1, rIdx, mIdx, 0, match);
+        const t2El = createTeamEl(match.team2, rIdx, mIdx, 1, match);
+
+        if (match.winner === 0) t1El.classList.add('winner');
+        if (match.winner === 1) t2El.classList.add('winner');
+
+        matchEl.appendChild(t1El);
+        matchEl.appendChild(t2El);
+        matchEl.classList.add('shuffle-anim');
+        matchEl.style.animationDelay = (rIdx * 100 + mIdx * 60) + 'ms';
+
+        wrapper.appendChild(matchEl);
+        matchesWrap.appendChild(wrapper);
+      });
+
+      roundEl.appendChild(matchesWrap);
+      container.appendChild(roundEl);
+    });
+
+    const champDiv = document.createElement('div');
+    champDiv.className = 'champion-box';
+    champDiv.innerHTML = `
+      <div class="champion-label">CHAMPION</div>
+      <div class="champion-display" id="championDisplay">
+        <div class="trophy">🏆</div>
+        <div class="champion-name" id="championName">?</div>
+      </div>
+    `;
+    container.appendChild(champDiv);
+    attachWinnerHandlers();
+  }
+
+  function createTeamEl(team, round, matchIdx, slot, matchData) {
+    const el = document.createElement('div');
+    el.className = 'match-team';
+    el.dataset.slot = slot;
+
+    const bar = document.createElement('div');
+    bar.className = 'team-color-bar';
+    el.appendChild(bar);
+
+    const input = document.createElement('input');
+    input.className = 'team-name-input';
+    input.type = 'text';
+    input.value = team.name || '';
+    input.placeholder = team.placeholder ? '승자 대기' : '팀 이름';
+    if (team.isBye) {
+      input.classList.add('bye-team');
+      input.value = 'BYE (부전승)';
+    }
+
+    el.appendChild(input);
+    return el;
+  }
+
+  function attachWinnerHandlers() {
+    document.querySelectorAll('.match-team').forEach(teamEl => {
+      teamEl.addEventListener('click', function (e) {
+        selectWinner(this);
+      });
+      const input = teamEl.querySelector('.team-name-input');
+      if (input) {
+        input.addEventListener('click', function(e) {
+          e.stopPropagation();
+          selectWinner(teamEl);
+        });
+        let pressTimer = null;
+        input.addEventListener('mousedown', function(e) {
+          pressTimer = setTimeout(() => {
+            e.stopPropagation();
+            input.focus();
+            input.select();
+          }, 500);
+        });
+        input.addEventListener('mouseup', () => clearTimeout(pressTimer));
+        input.addEventListener('touchstart', function(e) {
+          pressTimer = setTimeout(() => {
+            input.focus();
+            input.select();
+          }, 500);
+        }, { passive: true });
+        input.addEventListener('touchend', () => clearTimeout(pressTimer));
+      }
+    });
+  }
+
+  function selectWinner(teamEl) {
+    const matchEl = teamEl.closest('.match');
+    const round = parseInt(matchEl.dataset.round);
+    const matchIdx = parseInt(matchEl.dataset.match);
+    const teams = matchEl.querySelectorAll('.match-team');
+    const nameInput = teamEl.querySelector('.team-name-input');
+    const winnerName = nameInput.value.trim();
+
+    if (!winnerName || winnerName === 'BYE (부전승)' || winnerName === '승자 대기') return;
+
+    playSelectSound();
+    teams.forEach(t => t.classList.remove('winner'));
+    teamEl.classList.add('winner');
+    advanceWinner(round, matchIdx, winnerName);
+  }
+
+  function advanceWinner(round, matchIdx, winnerName) {
+    const nextRound = round + 1;
+    const nextMatchIdx = Math.floor(matchIdx / 2);
+    const nextSlot = matchIdx % 2;
+    const rounds = document.querySelectorAll('.round');
+
+    if (nextRound < rounds.length) {
+      const nextRoundEl = rounds[nextRound];
+      const matches = nextRoundEl.querySelectorAll('.match');
+      if (nextMatchIdx < matches.length) {
+        const nextMatch = matches[nextMatchIdx];
+        const teamSlots = nextMatch.querySelectorAll('.match-team');
+        if (teamSlots[nextSlot]) {
+          const input = teamSlots[nextSlot].querySelector('.team-name-input');
+          input.value = winnerName;
+          input.classList.remove('bye-team');
+          input.placeholder = '팀 이름';
+          input.style.pointerEvents = 'auto';
+
+          teamSlots[nextSlot].style.transition = 'background 0.3s';
+          teamSlots[nextSlot].style.background = 'rgba(72,149,239,0.15)';
+          setTimeout(() => { teamSlots[nextSlot].style.background = ''; }, 500);
+          setTimeout(() => playAdvanceSound(), 100);
+        }
+      }
+    } else {
+      document.getElementById('championName').textContent = winnerName;
+      const display = document.getElementById('championDisplay');
+      display.style.borderColor = 'var(--gold)';
+      display.style.boxShadow = '0 0 30px rgba(255,215,0,0.3)';
+      playChampionSound();
+    }
+  }
+
+  function shuffleTeams() {
+    if (!bracketData) return;
+    const { totalSlots } = bracketData;
+    const realTeams = [];
+    bracketData.teamLabels.forEach(t => {
+      if (!t.isBye) realTeams.push(t.name);
+    });
+
+    for (let i = realTeams.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [realTeams[i], realTeams[j]] = [realTeams[j], realTeams[i]];
+    }
+
+    let idx = 0;
+    for (let i = 0; i < totalSlots; i++) {
+      if (!bracketData.teamLabels[i].isBye) {
+        bracketData.teamLabels[i].name = realTeams[idx++];
+      }
+    }
+    renderBracket();
+    playShuffleSound();
+  }
+
+  function backToSetup() {
+    document.getElementById('bracket-screen').style.display = 'none';
+    document.getElementById('setup-screen').style.display = 'flex';
+    bracketData = null;
+  }
+</script>
+
+</body>
+</html>

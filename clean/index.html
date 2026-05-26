@@ -1,0 +1,1525 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>정리 대작전</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Noto+Sans+KR:wght@400;700&display=swap');
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg-dark: #0a0a12;
+  --bg-card: #12121f;
+  --red: #ff2244;
+  --red-glow: #ff224488;
+  --blue: #2266ff;
+  --blue-glow: #2266ff88;
+  --text: #e8e8f0;
+  --text-dim: #6a6a80;
+}
+
+body {
+  background: var(--bg-dark);
+  color: var(--text);
+  font-family: 'Noto Sans KR', sans-serif;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+}
+
+/* ===== TITLE SCREEN ===== */
+#title-screen {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  position: relative;
+  z-index: 10;
+}
+
+#title-screen::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, var(--red-glow) 0%, transparent 70%);
+  opacity: 0.3;
+  animation: pulse-bg 3s ease-in-out infinite;
+}
+
+@keyframes pulse-bg {
+  0%, 100% { opacity: 0.2; transform: translate(-50%, -50%) scale(1); }
+  50% { opacity: 0.4; transform: translate(-50%, -50%) scale(1.1); }
+}
+
+.title-text {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 64px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+  background: linear-gradient(135deg, var(--red), var(--blue));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: none;
+  filter: drop-shadow(0 0 30px var(--red-glow));
+  margin-bottom: 8px;
+}
+
+.subtitle {
+  font-size: 16px;
+  color: var(--text-dim);
+  margin-bottom: 40px;
+  position: relative;
+  z-index: 1;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  position: relative;
+  z-index: 1;
+}
+
+.input-label {
+  font-size: 18px;
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* +/- stepper */
+.point-stepper {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.point-stepper-btn {
+  width: 52px;
+  height: 60px;
+  background: var(--bg-card);
+  border: 2px solid var(--blue);
+  color: var(--blue);
+  font-size: 30px;
+  font-family: 'Black Han Sans', sans-serif;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+  user-select: none;
+}
+
+.point-stepper-btn:first-child {
+  border-radius: 12px 0 0 12px;
+  border-right: none;
+}
+
+.point-stepper-btn:last-child {
+  border-radius: 0 12px 12px 0;
+  border-left: none;
+}
+
+.point-stepper-btn:hover {
+  background: var(--blue);
+  color: white;
+}
+
+.point-stepper-btn:active { transform: scale(0.95); }
+
+.point-display {
+  width: 100px;
+  height: 60px;
+  background: var(--bg-card);
+  border: 2px solid var(--blue);
+  border-left: none;
+  border-right: none;
+  color: var(--text);
+  font-size: 36px;
+  font-family: 'Black Han Sans', sans-serif;
+  text-align: center;
+  line-height: 56px;
+  box-shadow: 0 0 20px var(--blue-glow);
+  user-select: none;
+}
+
+/* Timer setup */
+.timer-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.timer-set-display {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 48px;
+  color: var(--text);
+  letter-spacing: 4px;
+  text-shadow: 0 0 15px var(--blue-glow);
+  min-width: 180px;
+  text-align: center;
+}
+
+.timer-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+.timer-btn {
+  padding: 10px 20px;
+  background: var(--bg-card);
+  border: 2px solid var(--blue);
+  border-radius: 10px;
+  color: var(--blue);
+  font-size: 16px;
+  font-family: 'Black Han Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.timer-btn:hover { background: var(--blue); color: white; }
+
+.timer-btn.reset-timer { border-color: var(--red); color: var(--red); }
+.timer-btn.reset-timer:hover { background: var(--red); color: white; }
+
+.start-btn {
+  margin-top: 20px;
+  padding: 16px 60px;
+  background: linear-gradient(135deg, var(--red), #cc1133);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 22px;
+  font-family: 'Black Han Sans', sans-serif;
+  cursor: pointer;
+  letter-spacing: 2px;
+  transition: all 0.3s;
+  box-shadow: 0 4px 30px var(--red-glow);
+  position: relative;
+  overflow: hidden;
+}
+
+.start-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 40px var(--red-glow);
+}
+
+.start-btn:active { transform: translateY(1px); }
+
+.start-btn::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(45deg, transparent 40%, rgba(255,255,255,0.1) 50%, transparent 60%);
+  animation: shine 3s infinite;
+}
+
+@keyframes shine {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.help-btn {
+  margin-top: 10px;
+  background: transparent;
+  border: 1px solid var(--text-dim);
+  color: var(--text-dim);
+  padding: 8px 24px;
+  border-radius: 8px;
+  font-size: 14px;
+  font-family: 'Noto Sans KR', sans-serif;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.help-btn:hover {
+  color: var(--text);
+  border-color: var(--text);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.home-link {
+  position: absolute;
+  bottom: 30px;
+  color: var(--text-dim);
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.3s;
+  z-index: 10;
+}
+
+.home-link:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+/* 설명창 모달 스타일 */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(10, 10, 18, 0.85);
+  z-index: 200;
+  justify-content: center;
+  align-items: center;
+}
+
+.modal-content {
+  background: var(--bg-card);
+  padding: 40px;
+  border-radius: 16px;
+  border: 1px solid var(--blue);
+  box-shadow: 0 0 30px var(--blue-glow);
+  max-width: 600px;
+  text-align: center;
+  line-height: 1.8;
+}
+
+.modal-content p {
+  font-size: 16px;
+  color: var(--text);
+  margin-bottom: 24px;
+}
+
+.modal-close {
+  padding: 10px 30px;
+  background: var(--blue);
+  border: none;
+  border-radius: 8px;
+  color: white;
+  font-size: 16px;
+  font-family: 'Black Han Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.modal-close:hover {
+  background: #1144cc;
+}
+
+/* ===== TIMER SCREEN ===== */
+#timer-screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  position: relative;
+  z-index: 10;
+}
+
+.timer-running-label {
+  font-size: 20px;
+  color: var(--text-dim);
+  margin-bottom: 20px;
+  font-weight: 700;
+}
+
+.timer-running-display {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 96px;
+  color: var(--text);
+  text-shadow: 0 0 20px var(--blue-glow);
+  transition: color 0.3s, text-shadow 0.3s;
+  letter-spacing: 6px;
+}
+
+.timer-running-display.urgent {
+  color: var(--red);
+  text-shadow: 0 0 30px var(--red-glow);
+  animation: urgentPulse 0.8s ease-in-out infinite;
+}
+
+@keyframes urgentPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.05); }
+}
+
+.timer-progress-bar {
+  width: 400px;
+  max-width: 80vw;
+  height: 8px;
+  background: #1a1a2e;
+  border-radius: 4px;
+  margin-top: 24px;
+  overflow: hidden;
+}
+
+.timer-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--blue), var(--blue));
+  border-radius: 4px;
+  transition: width 1s linear, background 0.3s;
+}
+
+.timer-progress-fill.urgent {
+  background: linear-gradient(90deg, var(--red), #ff6644);
+  box-shadow: 0 0 10px var(--red-glow);
+}
+
+/* 청소 완료 스킵 버튼 */
+.skip-btn {
+  margin-top: 40px;
+  padding: 12px 30px;
+  background: transparent;
+  border: 2px solid var(--blue);
+  border-radius: 20px;
+  color: var(--blue);
+  font-size: 18px;
+  font-family: 'Black Han Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  letter-spacing: 1px;
+}
+
+.skip-btn:hover {
+  background: var(--blue);
+  color: white;
+  box-shadow: 0 0 15px var(--blue-glow);
+  transform: translateY(-2px);
+}
+
+/* Timer choice */
+#timer-choice {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  margin-top: 40px;
+}
+
+.choice-title {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 28px;
+  color: var(--text);
+}
+
+.choice-buttons { display: flex; gap: 20px; }
+
+.choice-btn {
+  padding: 18px 36px;
+  border: none;
+  border-radius: 14px;
+  font-size: 20px;
+  font-family: 'Black Han Sans', sans-serif;
+  cursor: pointer;
+  transition: all 0.3s;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+.choice-btn.success {
+  background: linear-gradient(135deg, var(--blue), #1144cc);
+  color: white;
+  box-shadow: 0 4px 25px var(--blue-glow);
+}
+
+.choice-btn.success:hover { transform: translateY(-3px); box-shadow: 0 8px 35px var(--blue-glow); }
+
+.choice-btn.fail {
+  background: linear-gradient(135deg, #3a2030, #2a1020);
+  color: var(--red);
+  border: 2px solid var(--red);
+  box-shadow: 0 4px 15px rgba(255,34,68,0.2);
+}
+
+.choice-btn.fail:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(255,34,68,0.3); }
+
+.choice-points {
+  font-size: 14px;
+  color: var(--text-dim);
+  margin-top: 6px;
+}
+
+/* ===== GAME SCREEN ===== */
+#game-screen {
+  display: none;
+  width: 100vw;
+  height: 100vh;
+  position: relative;
+  overflow: hidden;
+  cursor: crosshair;
+}
+
+#game-canvas {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+/* HUD */
+.hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 16px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10;
+  background: linear-gradient(180deg, rgba(10,10,18,0.9) 0%, transparent 100%);
+  pointer-events: none;
+}
+
+.hud-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 20px;
+}
+
+.hud-label { color: var(--text-dim); font-size: 13px; }
+.hud-value-red { color: var(--red); font-size: 28px; }
+.hud-value-blue { color: var(--blue); font-size: 28px; }
+
+/* Monster Health Bar — top right for horizontal layout */
+.health-bar-container {
+  position: absolute;
+  top: 70px;
+  right: 30px;
+  width: 200px;
+  z-index: 10;
+  text-align: center;
+}
+
+.monster-name {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 18px;
+  color: var(--red);
+  margin-bottom: 6px;
+  text-shadow: 0 0 10px var(--red-glow);
+}
+
+.health-bar-bg {
+  width: 100%;
+  height: 18px;
+  background: #1a1a2e;
+  border-radius: 9px;
+  border: 1px solid #2a2a40;
+  overflow: hidden;
+  position: relative;
+}
+
+.health-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--red), #ff6644);
+  border-radius: 9px;
+  transition: width 0.4s ease;
+  position: relative;
+  box-shadow: 0 0 10px var(--red-glow);
+}
+
+.health-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.2), transparent);
+  border-radius: 9px 9px 0 0;
+}
+
+.health-text {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-top: 4px;
+}
+
+/* Cannon */
+.cannon-base {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 5;
+}
+
+/* Result Screen */
+#result-screen {
+  display: none;
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 100;
+  background: rgba(10,10,18,0.95);
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+}
+
+.result-title {
+  font-family: 'Black Han Sans', sans-serif;
+  font-size: 56px;
+  margin-bottom: 16px;
+}
+
+.result-stats {
+  font-size: 18px;
+  color: var(--text-dim);
+  margin-bottom: 30px;
+  text-align: center;
+  line-height: 2;
+}
+
+.retry-btn {
+  padding: 14px 50px;
+  background: linear-gradient(135deg, var(--blue), #1144cc);
+  border: none;
+  border-radius: 12px;
+  color: white;
+  font-size: 20px;
+  font-family: 'Black Han Sans', sans-serif;
+  cursor: pointer;
+  box-shadow: 0 4px 30px var(--blue-glow);
+  transition: all 0.3s;
+}
+
+.retry-btn:hover { transform: translateY(-2px); }
+
+/* Projectile */
+.projectile {
+  position: absolute;
+  font-size: 32px;
+  z-index: 8;
+  pointer-events: none;
+  transition: none;
+}
+
+/* Hit effect */
+.hit-effect {
+  position: absolute;
+  font-size: 24px;
+  z-index: 15;
+  pointer-events: none;
+  animation: hitPop 0.6s ease-out forwards;
+}
+
+@keyframes hitPop {
+  0% { opacity: 1; transform: scale(1) translateY(0); }
+  100% { opacity: 0; transform: scale(2) translateY(-40px); }
+}
+
+/* Screen shake */
+@keyframes shake {
+  0%, 100% { transform: translate(0); }
+  20% { transform: translate(-4px, 2px); }
+  40% { transform: translate(4px, -2px); }
+  60% { transform: translate(-2px, 4px); }
+  80% { transform: translate(2px, -4px); }
+}
+
+.shaking { animation: shake 0.3s ease; }
+
+/* Stars background */
+.star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: white;
+  border-radius: 50%;
+  opacity: 0.4;
+  animation: twinkle 3s infinite;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.2; }
+  50% { opacity: 0.7; }
+}
+
+/* Muzzle flash */
+.muzzle-flash {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255,200,50,0.8), transparent);
+  pointer-events: none;
+  z-index: 9;
+  animation: flashOut 0.15s ease-out forwards;
+}
+
+@keyframes flashOut {
+  0% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0; transform: scale(2); }
+}
+
+/* Volume control */
+.vol-btn {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  z-index: 20;
+  background: var(--bg-card);
+  border: 1px solid #2a2a40;
+  color: var(--text-dim);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: all;
+}
+</style>
+</head>
+<body>
+
+<!-- 설명 모달 -->
+<div class="modal-overlay" id="helpModal">
+  <div class="modal-content">
+    <p>1. 청소 구역에 맞춰 포인트를 입력하세요. (ex. 책장 1점, 레고 박스 1점)<br>2. 청소를 완료하여 괴물을 퇴치하세요!</p>
+    <button class="modal-close" onclick="hideHelp()">닫기</button>
+  </div>
+</div>
+
+<!-- TITLE SCREEN -->
+<div id="title-screen">
+  <div class="title-text">정리 대작전</div>
+  <div class="subtitle">CLEANUP BATTLE</div>
+  <div class="input-group">
+    <div class="input-label">🎯 정리 포인트</div>
+    <div class="point-stepper">
+      <button class="point-stepper-btn" onclick="changePoints(-1)">−</button>
+      <div class="point-display" id="pointDisplay">10</div>
+      <button class="point-stepper-btn" onclick="changePoints(1)">+</button>
+    </div>
+    <div style="font-size:13px; color:var(--text-dim);">포인트 = 대포 발사 횟수</div>
+
+    <div class="timer-section">
+      <div class="input-label">⏱️ 정리 시간</div>
+      <div class="timer-set-display" id="timerSetDisplay">05:00</div>
+      <div class="timer-buttons">
+        <button class="timer-btn" onclick="addTime(1)">+1분</button>
+        <button class="timer-btn" onclick="addTime(5)">+5분</button>
+        <button class="timer-btn reset-timer" onclick="resetTime()">초기화</button>
+      </div>
+    </div>
+
+    <button class="start-btn" onclick="startTimer()">정리 시작</button>
+    <button class="help-btn" onclick="showHelp()">게임 설명</button>
+  </div>
+  
+  <a href="../index.php" class="home-link">홈으로 돌아가기</a>
+</div>
+
+<!-- TIMER SCREEN -->
+<div id="timer-screen">
+  <div class="timer-running-label">🧹 정리 중...</div>
+  <div class="timer-running-display" id="timerRunning">05:00</div>
+  <div class="timer-progress-bar">
+    <div class="timer-progress-fill" id="timerProgressFill" style="width:100%"></div>
+  </div>
+  
+  <!-- 새로 추가된 청소 완료 스킵 버튼 -->
+  <button id="skipTimerBtn" class="skip-btn" onclick="finishTimerEarly()">✨ 청소 완료! (바로가기)</button>
+
+  <div id="timer-choice">
+    <div class="choice-title">⏰ 시간 종료! 정리 결과는?</div>
+    <div class="choice-buttons">
+      <button class="choice-btn success" onclick="timerResult(true)">
+        ✅ 정리 완료
+        <div class="choice-points" id="successPoints">+10 포인트</div>
+      </button>
+      <button class="choice-btn fail" onclick="timerResult(false)">
+        ❌ 정리 실패
+        <div class="choice-points" id="failPoints">+5 포인트</div>
+      </button>
+    </div>
+  </div>
+  <button class="vol-btn" onclick="toggleMute()">🔊</button>
+</div>
+
+<!-- GAME SCREEN -->
+<div id="game-screen">
+  <canvas id="game-canvas"></canvas>
+
+  <div class="hud">
+    <div class="hud-item">
+      <div>
+        <div class="hud-label">남은 탄환</div>
+        <div class="hud-value-blue" id="ammoDisplay">10</div>
+      </div>
+    </div>
+    <div class="hud-item">
+      <div>
+        <div class="hud-label">처치 수</div>
+        <div class="hud-value-red" id="killDisplay">0</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="health-bar-container" id="healthBarContainer">
+    <div class="monster-name" id="monsterName">👾 괴물</div>
+    <div class="health-bar-bg">
+      <div class="health-bar-fill" id="healthFill" style="width:100%"></div>
+    </div>
+    <div class="health-text" id="healthText">HP: 3 / 3</div>
+  </div>
+
+  <button class="vol-btn" id="volBtn" onclick="toggleMute()">🔊</button>
+</div>
+
+<!-- RESULT SCREEN -->
+<div id="result-screen">
+  <div class="result-title" id="resultTitle"></div>
+  <div class="result-stats" id="resultStats"></div>
+  <button class="retry-btn" onclick="goToTitle()">다시 하기</button>
+</div>
+
+<script>
+// ========== 모달 컨트롤 ==========
+function showHelp() {
+  document.getElementById('helpModal').style.display = 'flex';
+}
+
+function hideHelp() {
+  document.getElementById('helpModal').style.display = 'none';
+}
+
+// ========== AUDIO ENGINE (Web Audio API) ==========
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+let muted = false;
+let bgOsc1, bgOsc2, bgGain;
+
+function initAudio() {
+  if (audioCtx) return;
+  audioCtx = new AudioCtx();
+}
+
+function playShoot() {
+  if (!audioCtx || muted) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.15);
+  gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.2);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + 0.2);
+}
+
+function playHit() {
+  if (!audioCtx || muted) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.1);
+  gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.15);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+}
+
+function playKill() {
+  if (!audioCtx || muted) return;
+  const notes = [523, 659, 784];
+  notes.forEach((freq, i) => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.15, audioCtx.currentTime + i * 0.1);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + i * 0.1 + 0.3);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(audioCtx.currentTime + i * 0.1);
+    osc.stop(audioCtx.currentTime + i * 0.1 + 0.3);
+  });
+}
+
+function playMiss() {
+  if (!audioCtx || muted) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'triangle';
+  osc.frequency.setValueAtTime(200, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.3);
+  gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+}
+
+function playTick() {
+  if (!audioCtx || muted) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(600, audioCtx.currentTime + 0.04);
+  gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.06);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + 0.06);
+}
+
+function playUrgentTick() {
+  if (!audioCtx || muted) return;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(1000, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(700, audioCtx.currentTime + 0.06);
+  gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + 0.1);
+}
+
+function playTimerEnd() {
+  if (!audioCtx || muted) return;
+  [440, 440, 660].forEach((freq, i) => {
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(0.2, audioCtx.currentTime + i * 0.2);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + i * 0.2 + 0.25);
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start(audioCtx.currentTime + i * 0.2);
+    osc.stop(audioCtx.currentTime + i * 0.2 + 0.25);
+  });
+}
+
+function startBGM() {
+  if (!audioCtx || muted) return;
+  stopBGM();
+  bgGain = audioCtx.createGain();
+  bgGain.gain.value = 0.06;
+  bgGain.connect(audioCtx.destination);
+
+  bgOsc1 = audioCtx.createOscillator();
+  bgOsc1.type = 'sine';
+  bgOsc1.frequency.value = 55;
+  bgOsc1.connect(bgGain);
+  bgOsc1.start();
+
+  bgOsc2 = audioCtx.createOscillator();
+  bgOsc2.type = 'triangle';
+  bgOsc2.frequency.value = 82.4;
+  const bgGain2 = audioCtx.createGain();
+  bgGain2.gain.value = 0.04;
+  bgOsc2.connect(bgGain2).connect(audioCtx.destination);
+  bgOsc2.start();
+
+  const lfo = audioCtx.createOscillator();
+  lfo.frequency.value = 0.3;
+  const lfoGain = audioCtx.createGain();
+  lfoGain.gain.value = 8;
+  lfo.connect(lfoGain).connect(bgOsc1.frequency);
+  lfo.start();
+}
+
+function stopBGM() {
+  try { bgOsc1 && bgOsc1.stop(); } catch(e) {}
+  try { bgOsc2 && bgOsc2.stop(); } catch(e) {}
+  bgOsc1 = null; bgOsc2 = null;
+}
+
+function toggleMute() {
+  muted = !muted;
+  document.querySelectorAll('.vol-btn').forEach(b => b.textContent = muted ? '🔇' : '🔊');
+  if (muted) stopBGM();
+  else if (gameActive) startBGM();
+}
+
+// ========== TITLE: POINTS STEPPER ==========
+let pointValue = 10;
+
+function changePoints(delta) {
+  pointValue = Math.max(1, Math.min(99, pointValue + delta));
+  document.getElementById('pointDisplay').textContent = pointValue;
+  updateChoicePoints();
+}
+
+// ========== TITLE: TIMER SETUP ==========
+let timerMinutes = 5;
+
+function addTime(mins) {
+  timerMinutes = Math.min(120, timerMinutes + mins);
+  updateTimerSetDisplay();
+}
+
+function resetTime() {
+  timerMinutes = 0;
+  updateTimerSetDisplay();
+}
+
+function updateTimerSetDisplay() {
+  document.getElementById('timerSetDisplay').textContent = String(Math.floor(timerMinutes)).padStart(2, '0') + ':00';
+}
+
+function updateChoicePoints() {
+  document.getElementById('successPoints').textContent = '+' + pointValue + ' 포인트';
+  document.getElementById('failPoints').textContent = '+' + Math.floor(pointValue / 2) + ' 포인트';
+}
+updateChoicePoints();
+
+// ========== TIMER PHASE ==========
+let timerSeconds = 0;
+let timerTotalSeconds = 0;
+let timerInterval = null;
+
+function startTimer() {
+  initAudio();
+
+  if (timerMinutes <= 0) {
+    totalPoints = pointValue;
+    ammo = totalPoints;
+    goToGame();
+    return;
+  }
+
+  timerTotalSeconds = timerMinutes * 60;
+  timerSeconds = timerTotalSeconds;
+  updateChoicePoints();
+
+  document.getElementById('title-screen').style.display = 'none';
+  document.getElementById('timer-screen').style.display = 'flex';
+  document.getElementById('timer-choice').style.display = 'none';
+  
+  // 스킵 버튼을 다시 보여줍니다.
+  document.getElementById('skipTimerBtn').style.display = 'block';
+  
+  document.getElementById('timerRunning').classList.remove('urgent');
+  document.getElementById('timerProgressFill').classList.remove('urgent');
+
+  updateTimerRunning();
+
+  timerInterval = setInterval(() => {
+    timerSeconds--;
+    if (timerSeconds <= 0) timerSeconds = 0;
+    updateTimerRunning();
+
+    // tick sounds
+    if (timerSeconds > 60) {
+      playTick();
+    } else if (timerSeconds > 0) {
+      playUrgentTick();
+    }
+
+    if (timerSeconds <= 0) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      playTimerEnd();
+      document.getElementById('timer-choice').style.display = 'flex';
+      
+      // 시간이 다 되면 스킵 버튼은 숨겨줍니다.
+      document.getElementById('skipTimerBtn').style.display = 'none';
+    }
+  }, 1000);
+}
+
+// 스킵 버튼을 눌렀을 때 호출되는 함수
+function finishTimerEarly() {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
+  }
+  // 청소를 끝마쳤다고 가정하고 환하게 게임으로 넘어갑니다.
+  timerResult(true);
+}
+
+function updateTimerRunning() {
+  const m = Math.floor(timerSeconds / 60);
+  const s = timerSeconds % 60;
+  const el = document.getElementById('timerRunning');
+  el.textContent = String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+
+  const fill = document.getElementById('timerProgressFill');
+  fill.style.width = (timerSeconds / timerTotalSeconds * 100) + '%';
+
+  if (timerSeconds <= 60) {
+    el.classList.add('urgent');
+    fill.classList.add('urgent');
+  } else {
+    el.classList.remove('urgent');
+    fill.classList.remove('urgent');
+  }
+}
+
+function timerResult(success) {
+  if (success) {
+    totalPoints = pointValue;
+  } else {
+    totalPoints = Math.floor(pointValue / 2);
+  }
+  ammo = totalPoints;
+  document.getElementById('timer-screen').style.display = 'none';
+  goToGame();
+}
+
+// ========== GAME STATE ==========
+let totalPoints = 10;
+let ammo = 10;
+let kills = 0;
+let shots = 0;
+let monsterHP = 3;
+let monsterMaxHP = 3;
+let gameActive = false;
+let canShoot = true;
+let canvas, ctx;
+let monsterX, monsterY;
+let particles = [];
+let projectiles = [];
+let animId;
+
+const trashEmojis = ['🗑️','🧹','🧽','🧴','🪣','🚿','💧','🫧','♻️','🧤','🪥'];
+const monsterEmojis = ['👾','👹','👺','💀','🧟','👻','🦠','🐛','🪳','🕷️'];
+
+function getRandomMonster() {
+  return monsterEmojis[Math.floor(Math.random() * monsterEmojis.length)];
+}
+
+function getRandomTrash() {
+  return trashEmojis[Math.floor(Math.random() * trashEmojis.length)];
+}
+
+// ========== CANVAS DRAWING ==========
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+}
+
+function drawStars() {
+  for (let i = 0; i < 80; i++) {
+    const x = (Math.sin(i * 43.7 + Date.now() * 0.0001) * 0.5 + 0.5) * canvas.width;
+    const y = (Math.cos(i * 27.3 + Date.now() * 0.00008) * 0.5 + 0.5) * canvas.height;
+    const alpha = 0.2 + 0.3 * Math.sin(Date.now() * 0.002 + i);
+    ctx.fillStyle = `rgba(200,200,255,${alpha})`;
+    ctx.beginPath();
+    ctx.arc(x, y, 1, 0, Math.PI * 2);
+    ctx.fill();
+  }
+}
+
+// 세련된 네온 메카닉 스타일의 대포 (수직 상향 & 2배 크기)
+function drawCannon() {
+  const cx = canvas.width / 2;
+  const cy = canvas.height - 80;
+
+  // 1. 포신 아래 그림자
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+  ctx.fillRect(cx - 10, cy - 120, 20, 120);
+
+  // 2. 포신 (미래지향적인 다각형 형태)
+  const barrelGrad = ctx.createLinearGradient(cx - 30, cy, cx + 30, cy);
+  barrelGrad.addColorStop(0, '#4a4a6a');
+  barrelGrad.addColorStop(0.5, '#7a7a9a');
+  barrelGrad.addColorStop(1, '#2a2a4a');
+  ctx.fillStyle = barrelGrad;
+  ctx.beginPath();
+  ctx.moveTo(cx - 24, cy - 20);
+  ctx.lineTo(cx - 16, cy - 140);
+  ctx.lineTo(cx + 16, cy - 140);
+  ctx.lineTo(cx + 24, cy - 20);
+  ctx.fill();
+
+  // 포신의 푸른 네온 라인 디테일
+  ctx.strokeStyle = '#2266ff';
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - 40);
+  ctx.lineTo(cx, cy - 120);
+  ctx.stroke();
+
+  // 포신 끝부분 (총구)
+  const muzzleGrad = ctx.createLinearGradient(cx - 30, cy - 150, cx + 30, cy - 150);
+  muzzleGrad.addColorStop(0, '#111115');
+  muzzleGrad.addColorStop(0.5, '#444455');
+  muzzleGrad.addColorStop(1, '#111115');
+  ctx.fillStyle = muzzleGrad;
+  ctx.fillRect(cx - 24, cy - 164, 48, 24);
+  
+  // 총구 끝 얇은 네온 링
+  ctx.strokeStyle = '#22ffff';
+  ctx.lineWidth = 4;
+  ctx.strokeRect(cx - 20, cy - 168, 40, 8);
+
+  // 3. 포탑 베이스 (각진 다각형 형태)
+  ctx.fillStyle = '#12121f';
+  ctx.beginPath();
+  ctx.moveTo(cx - 60, cy + 40);
+  ctx.lineTo(cx - 40, cy - 30);
+  ctx.lineTo(cx, cy - 50);
+  ctx.lineTo(cx + 40, cy - 30);
+  ctx.lineTo(cx + 60, cy + 40);
+  ctx.fill();
+
+  ctx.strokeStyle = '#2266ff';
+  ctx.lineWidth = 6;
+  ctx.stroke();
+
+  // 베이스 중심을 밝히는 은은한 코어
+  const coreGrad = ctx.createRadialGradient(cx, cy, 0, cx, cy, 24);
+  coreGrad.addColorStop(0, '#ffffff');
+  coreGrad.addColorStop(0.3, '#22ffff');
+  coreGrad.addColorStop(1, '#2266ff');
+  ctx.fillStyle = coreGrad;
+  
+  // 빛 번짐 효과를 살짝 곁들입니다.
+  ctx.shadowColor = '#2266ff';
+  ctx.shadowBlur = 30;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 20, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.shadowBlur = 0; // 그림자 효과 초기화
+
+  // 4. 발사 대기 중인 은은한 에너지 글로우
+  const glowGrad = ctx.createRadialGradient(cx, cy - 160, 0, cx, cy - 160, 60);
+  glowGrad.addColorStop(0, 'rgba(34,255,255,0.25)');
+  glowGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = glowGrad;
+  ctx.beginPath();
+  ctx.arc(cx, cy - 160, 60, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+// Monster on the TOP side (상단 중앙 & 2배 크기)
+function drawMonster() {
+  if (monsterHP <= 0) return;
+
+  const t = Date.now() * 0.003;
+  const bobY = Math.sin(t) * 15;
+  const wobbleX = Math.sin(t * 1.3) * 8;
+
+  monsterX = canvas.width / 2 + wobbleX;
+  monsterY = 180 + bobY;
+
+  // Shadow
+  const shadowGrad = ctx.createRadialGradient(monsterX, monsterY + 80, 0, monsterX, monsterY + 80, 100);
+  shadowGrad.addColorStop(0, 'rgba(255,34,68,0.2)');
+  shadowGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = shadowGrad;
+  ctx.beginPath();
+  ctx.arc(monsterX, monsterY + 80, 100, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Monster emoji
+  ctx.font = '128px serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(currentMonsterEmoji, monsterX, monsterY);
+
+  // Red glow
+  const glow = ctx.createRadialGradient(monsterX, monsterY, 40, monsterX, monsterY, 140);
+  glow.addColorStop(0, 'rgba(255,34,68,0.15)');
+  glow.addColorStop(1, 'transparent');
+  ctx.fillStyle = glow;
+  ctx.beginPath();
+  ctx.arc(monsterX, monsterY, 140, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawParticles() {
+  particles = particles.filter(p => p.life > 0);
+  particles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.15;
+    p.life -= 0.02;
+    ctx.globalAlpha = p.life;
+    ctx.font = `${p.size}px serif`;
+    ctx.textAlign = 'center';
+    ctx.fillText(p.emoji, p.x, p.y);
+    ctx.globalAlpha = 1;
+  });
+}
+
+// Vertical projectiles
+function drawProjectiles() {
+  projectiles = projectiles.filter(p => p.y > -60);
+  projectiles.forEach(p => {
+    p.x += p.vx;
+    p.y += p.vy;
+    ctx.font = '64px serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(p.emoji, p.x, p.y);
+
+    if (monsterHP > 0 && Math.abs(p.x - monsterX) < 100 && Math.abs(p.y - monsterY) < 100 && !p.hit) {
+      p.hit = true;
+      p.y = -200;
+      handleHit();
+    }
+  });
+}
+
+let currentMonsterEmoji = '👾';
+
+function spawnMonster() {
+  currentMonsterEmoji = getRandomMonster();
+  monsterMaxHP = 2 + Math.floor(kills / 2);
+  if (monsterMaxHP > 8) monsterMaxHP = 8;
+  monsterHP = monsterMaxHP;
+  updateHealthBar();
+  const nameEl = document.getElementById('monsterName');
+  nameEl.textContent = currentMonsterEmoji + ' 괴물 Lv.' + (kills + 1);
+}
+
+function handleHit() {
+  const lucky = Math.random() < 0.7;
+  if (lucky) {
+    monsterHP--;
+    playHit();
+    updateHealthBar();
+    shakeScreen();
+    spawnHitParticles(monsterX, monsterY, '💥');
+
+    if (monsterHP <= 0) {
+      kills++;
+      document.getElementById('killDisplay').textContent = kills;
+      playKill();
+      spawnDeathParticles(monsterX, monsterY);
+      if (ammo > 0) {
+        setTimeout(spawnMonster, 800);
+      }
+    }
+  } else {
+    playMiss();
+    spawnHitParticles(monsterX, monsterY, '💨');
+    showFloatingText(monsterX, monsterY - 50, 'MISS!', '#6a6aaa');
+  }
+
+  if (ammo <= 0 && projectiles.length === 0) {
+    setTimeout(endGame, 1000);
+  }
+}
+
+function updateHealthBar() {
+  const pct = Math.max(0, monsterHP / monsterMaxHP * 100);
+  document.getElementById('healthFill').style.width = pct + '%';
+  document.getElementById('healthText').textContent = `HP: ${Math.max(0, monsterHP)} / ${monsterMaxHP}`;
+}
+
+function spawnHitParticles(x, y, emoji) {
+  for (let i = 0; i < 6; i++) {
+    particles.push({
+      x, y, emoji,
+      vx: (Math.random() - 0.5) * 8,
+      vy: (Math.random() - 0.5) * 8 - 3,
+      life: 1,
+      size: 16 + Math.random() * 12
+    });
+  }
+}
+
+function spawnDeathParticles(x, y) {
+  const emojis = ['✨','💫','⭐','🌟','💥','🔥'];
+  for (let i = 0; i < 12; i++) {
+    particles.push({
+      x, y,
+      emoji: emojis[Math.floor(Math.random() * emojis.length)],
+      vx: (Math.random() - 0.5) * 12,
+      vy: (Math.random() - 0.5) * 12 - 5,
+      life: 1,
+      size: 20 + Math.random() * 16
+    });
+  }
+}
+
+function shakeScreen() {
+  const gs = document.getElementById('game-screen');
+  gs.classList.add('shaking');
+  setTimeout(() => gs.classList.remove('shaking'), 300);
+}
+
+function showFloatingText(x, y, text, color) {
+  const el = document.createElement('div');
+  el.className = 'hit-effect';
+  el.textContent = text;
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  el.style.color = color;
+  el.style.fontFamily = "'Black Han Sans', sans-serif";
+  el.style.fontSize = '28px';
+  el.style.textShadow = `0 0 10px ${color}`;
+  document.getElementById('game-screen').appendChild(el);
+  setTimeout(() => el.remove(), 600);
+}
+
+// VERTICAL shoot
+function shoot() {
+  if (!gameActive || !canShoot || ammo <= 0) return;
+  canShoot = false;
+  setTimeout(() => canShoot = true, 250);
+
+  ammo--;
+  shots++;
+  document.getElementById('ammoDisplay').textContent = ammo;
+
+  // 대포의 방향에 맞춰 총구 위치를 상단으로 조정했습니다.
+  const muzzleX = canvas.width / 2;
+  const muzzleY = canvas.height - 240;
+
+  playShoot();
+
+  // Muzzle flash
+  const flash = document.createElement('div');
+  flash.className = 'muzzle-flash';
+  flash.style.left = (muzzleX - 30) + 'px';
+  flash.style.top = (muzzleY - 30) + 'px';
+  document.getElementById('game-screen').appendChild(flash);
+  setTimeout(() => flash.remove(), 150);
+
+  // Projectile — vertical UP
+  const emoji = getRandomTrash();
+  projectiles.push({
+    x: muzzleX + (Math.random() - 0.5) * 14,
+    y: muzzleY,
+    vx: (Math.random() - 0.5) * 2,
+    vy: -20,
+    emoji,
+    hit: false
+  });
+
+  if (ammo <= 0) {
+    setTimeout(() => {
+      if (projectiles.every(p => p.hit || p.y < -50)) {
+        endGame();
+      } else {
+        setTimeout(endGame, 1500);
+      }
+    }, 1500);
+  }
+}
+
+function gameLoop() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  bgGrad.addColorStop(0, '#05050f');
+  bgGrad.addColorStop(0.5, '#0a0a18');
+  bgGrad.addColorStop(1, '#0f0f25');
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  drawStars();
+  drawMonster();
+  drawProjectiles();
+  drawCannon();
+  drawParticles();
+
+  const groundGrad = ctx.createLinearGradient(0, canvas.height - 20, 0, canvas.height);
+  groundGrad.addColorStop(0, 'transparent');
+  groundGrad.addColorStop(1, 'rgba(34,102,255,0.15)');
+  ctx.fillStyle = groundGrad;
+  ctx.fillRect(0, canvas.height - 20, canvas.width, 20);
+
+  if (gameActive) animId = requestAnimationFrame(gameLoop);
+}
+
+// ========== GAME FLOW ==========
+function goToGame() {
+  kills = 0;
+  shots = 0;
+  particles = [];
+  projectiles = [];
+  gameActive = true;
+  canShoot = true;
+
+  document.getElementById('title-screen').style.display = 'none';
+  document.getElementById('timer-screen').style.display = 'none';
+  document.getElementById('game-screen').style.display = 'block';
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('ammoDisplay').textContent = ammo;
+  document.getElementById('killDisplay').textContent = 0;
+
+  canvas = document.getElementById('game-canvas');
+  ctx = canvas.getContext('2d');
+  resizeCanvas();
+
+  spawnMonster();
+  startBGM();
+  gameLoop();
+}
+
+function endGame() {
+  gameActive = false;
+  stopBGM();
+  cancelAnimationFrame(animId);
+
+  const resultScreen = document.getElementById('result-screen');
+  const resultTitle = document.getElementById('resultTitle');
+  const resultStats = document.getElementById('resultStats');
+
+  resultScreen.style.display = 'flex';
+
+  if (kills > 0) {
+    resultTitle.textContent = '🎉 전투 완료!';
+    resultTitle.style.background = 'linear-gradient(135deg, var(--red), var(--blue))';
+    resultTitle.style.webkitBackgroundClip = 'text';
+    resultTitle.style.webkitTextFillColor = 'transparent';
+  } else {
+    resultTitle.textContent = '💀 다음에 다시...';
+    resultTitle.style.color = 'var(--text-dim)';
+    resultTitle.style.background = 'none';
+    resultTitle.style.webkitTextFillColor = 'var(--text-dim)';
+  }
+
+  const accuracy = shots > 0 ? Math.round(kills / shots * 100) : 0;
+  resultStats.innerHTML = `
+    사용한 포인트: <span style="color:var(--blue)">${totalPoints}</span><br>
+    처치한 괴물: <span style="color:var(--red)">${kills}</span>마리<br>
+    정리 등급: <span style="color:${kills >= totalPoints * 0.5 ? 'var(--red)' : 'var(--text-dim)'}">${
+      kills >= totalPoints * 0.7 ? '🏆 S' :
+      kills >= totalPoints * 0.5 ? '🥇 A' :
+      kills >= totalPoints * 0.3 ? '🥈 B' :
+      kills > 0 ? '🥉 C' : '💤 F'
+    }등급</span>
+  `;
+}
+
+function goToTitle() {
+  document.getElementById('title-screen').style.display = 'flex';
+  document.getElementById('game-screen').style.display = 'none';
+  document.getElementById('result-screen').style.display = 'none';
+  document.getElementById('timer-screen').style.display = 'none';
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+}
+
+// ========== INPUT ==========
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space') {
+    e.preventDefault();
+    shoot();
+  }
+});
+
+document.addEventListener('click', (e) => {
+  // 모달 영역과 버튼들을 클릭했을 때는 발사되지 않도록 예외 처리
+  if (gameActive && e.target.tagName !== 'BUTTON' && !e.target.closest('.modal-overlay')) {
+    shoot();
+  }
+});
+
+window.addEventListener('resize', () => {
+  if (canvas) resizeCanvas();
+});
+</script>
+</body>
+</html>

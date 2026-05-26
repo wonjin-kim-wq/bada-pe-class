@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAPS 셔틀런 기록장</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-deep: #0a0e1a;
+            --bg-card: #111827;
+            --bg-surface: #1a2236;
+            --border: #1e2d4a;
+            --text-primary: #e8ecf4;
+            --text-muted: #6b7a94;
+            --accent-red: #ef4444;
+            --accent-red-glow: rgba(239, 68, 68, 0.4);
+            --accent-blue: #3b82f6;
+            --accent-blue-deep: #1d4ed8;
+            --accent-blue-glow: rgba(59, 130, 246, 0.3);
+            --card-active: linear-gradient(135deg, #1e3a5f, #162d50);
+            --card-dropped: linear-gradient(135deg, #1a1a2e, #16162a);
+            --success: #10b981;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            user-select: none;
+            overflow-x: hidden;
+            min-height: 100dvh;
+        }
+
+        /* ===== SETUP SCREEN ===== */
+        #setup-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100dvh;
+            padding: 24px;
+        }
+
+        .setup-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .setup-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 48px 36px;
+            width: 100%;
+            max-width: 420px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 80px var(--accent-blue-glow);
+        }
+
+        .setup-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 28px;
+            font-weight: 900;
+            color: var(--accent-blue);
+            letter-spacing: 3px;
+            margin-bottom: 8px;
+            text-shadow: 0 0 20px var(--accent-blue-glow);
+        }
+
+        .setup-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-bottom: 36px;
+            letter-spacing: 1px;
+        }
+
+        .setup-label {
+            display: block;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
+        }
+
+        .stepper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 32px;
+        }
+
+        .stepper button {
+            width: 48px;
+            height: 48px;
+            border: 1px solid var(--border);
+            background: var(--bg-surface);
+            color: var(--text-primary);
+            font-size: 20px;
+            font-weight: 700;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .stepper button:hover { background: #243352; border-color: var(--accent-blue); }
+        .stepper button:active { transform: scale(0.93); }
+
+        .stepper input {
+            flex: 1;
+            background: var(--bg-deep);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text-primary);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .stepper input:focus { border-color: var(--accent-blue); }
+        .stepper input[type=number]::-webkit-outer-spin-button,
+        .stepper input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .stepper input[type=number] { -moz-appearance: textfield; }
+
+        .start-btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s;
+            letter-spacing: 1px;
+            background: linear-gradient(135deg, var(--accent-blue-deep), var(--accent-blue));
+            color: #fff;
+            box-shadow: 0 4px 24px var(--accent-blue-glow);
+        }
+        .start-btn:hover { box-shadow: 0 6px 32px rgba(59,130,246,0.5); transform: translateY(-1px); }
+        .start-btn:active { transform: translateY(0) scale(0.98); }
+
+        .home-link {
+            font-size: 14px;
+            color: var(--text-muted);
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .home-link:hover { color: var(--text-primary); }
+
+        /* ===== MAIN SCREEN ===== */
+        #main-screen {
+            display: none;
+            flex-direction: column;
+            height: 100dvh;
+            padding: 12px;
+            max-width: 1280px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        #main-screen.visible { display: flex; }
+
+        .top-area {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            height: 60dvh;
+            min-height: 300px;
+        }
+
+        .counter-panel {
+            flex: 1;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .counter-label {
+            position: absolute;
+            top: 14px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        #main-counter {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(240px, 60vw, 60dvh);
+            font-weight: 900;
+            color: var(--accent-red);
+            line-height: 1;
+            text-shadow: 0 0 40px var(--accent-red-glow);
+            transition: text-shadow 0.2s;
+        }
+
+        @keyframes counter-pop {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.08); text-shadow: 0 0 60px var(--accent-red-glow), 0 0 120px rgba(239,68,68,0.2); }
+            100% { transform: scale(1); }
+        }
+        #main-counter.pop { animation: counter-pop 0.25s ease-out; }
+
+        .timer-display {
+            position: absolute;
+            bottom: 32px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+        }
+
+        .audio-credit {
+            position: absolute;
+            bottom: 10px;
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+        }
+
+        /* 재생 컨트롤 */
+        .playback-controls {
+            position: absolute;
+            top: 14px;
+            right: 16px;
+            display: flex;
+            gap: 8px;
+        }
+        .btn-playback {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--border);
+            background: var(--bg-surface);
+            color: var(--text-muted);
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .btn-playback:hover { background: #243352; color: var(--text-primary); border-color: var(--accent-blue); }
+        .btn-playback.playing { color: var(--success); border-color: var(--success); }
+
+        .progress-track {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-blue), #06b6d4);
+            transition: width 0.1s linear;
+            border-radius: 0 2px 0 0;
+        }
+
+        /* Student Grid */
+        .grid-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 4px;
+            padding-bottom: 8px;
+        }
+        .grid-scroll::-webkit-scrollbar { width: 5px; }
+        .grid-scroll::-webkit-scrollbar-track { background: transparent; }
+        .grid-scroll::-webkit-scrollbar-thumb { background: #2a3550; border-radius: 10px; }
+
+        .student-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+        }
+
+        .s-card {
+            background: var(--card-active);
+            border: 2px solid #2a4a7a;
+            border-radius: 14px;
+            padding: 12px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            position: relative;
+        }
+        .s-card:hover { border-color: var(--accent-blue); box-shadow: 0 0 16px var(--accent-blue-glow); }
+        .s-card:active { transform: scale(0.94); }
+
+        .s-card .s-num {
+            font-size: 22px;
+            font-weight: 800;
+            color: #a0c4ff;
+        }
+        .s-card .s-score {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 28px;
+            font-weight: 900;
+            color: var(--accent-red);
+            margin-top: 4px;
+            opacity: 0;
+            transform: translateY(6px);
+            transition: all 0.3s ease;
+        }
+
+        .s-card.dropped {
+            background: var(--card-dropped);
+            border-color: #2a2a3e;
+            cursor: default;
+            box-shadow: none;
+        }
+        .s-card.dropped:hover { border-color: #2a2a3e; box-shadow: none; }
+        .s-card.dropped .s-num { color: #555a70; }
+        .s-card.dropped .s-score { opacity: 1; transform: translateY(0); }
+
+        /* Bottom Controls */
+        .bottom-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0 4px;
+            gap: 12px;
+        }
+
+        .btn-secondary {
+            padding: 10px 20px;
+            border: 1px solid var(--border);
+            background: var(--bg-surface);
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-secondary:hover { background: #243352; color: var(--text-primary); }
+
+        .btn-export {
+            padding: 12px 28px;
+            border: 1px solid var(--accent-red);
+            background: linear-gradient(135deg, #7f1d1d, #991b1b);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 800;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.5px;
+        }
+        .btn-export:hover { box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3); }
+
+        .help-text {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-align: center;
+            line-height: 1.6;
+        }
+
+        /* ===== RESULT MODAL ===== */
+        #result-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.88);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        #result-modal.visible { display: flex; }
+
+        .modal-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px;
+            width: 100%;
+            max-width: 440px;
+            max-height: 85dvh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        }
+
+        .modal-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent-blue);
+            text-align: center;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+
+        .result-scroll {
+            flex: 1;
+            overflow-y: auto;
+            background: var(--bg-deep);
+            border-radius: 12px;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+
+        .result-scroll table { width: 100%; border-collapse: collapse; }
+        .result-scroll th {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            padding: 8px 4px 12px;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+        .result-scroll td {
+            padding: 10px 4px;
+            text-align: center;
+            border-bottom: 1px solid rgba(30,45,74,0.4);
+            font-size: 15px;
+        }
+        .result-scroll tr:last-child td { border-bottom: none; }
+        .result-scroll .td-num { font-weight: 600; color: #80a8d0; }
+        .result-scroll .td-score { font-weight: 900; color: var(--accent-red); }
+        .result-scroll .td-active { color: var(--success); font-weight: 600; }
+
+        .btn-close-modal {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: linear-gradient(135deg, var(--accent-blue-deep), var(--accent-blue));
+            color: #fff;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-close-modal:hover { box-shadow: 0 4px 20px var(--accent-blue-glow); }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .top-area { flex-direction: column; height: 60dvh; }
+            .student-grid { grid-template-columns: repeat(4, 1fr); }
+            .help-text { display: none; }
+        }
+        @media (max-width: 480px) {
+            #main-counter { font-size: 50vw; }
+            .student-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+            .s-card { min-height: 85px; padding: 8px 6px; }
+            .s-card .s-num { font-size: 18px; }
+            .s-card .s-score { font-size: 22px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="setup-screen">
+        <div class="setup-container">
+            <div class="setup-box">
+                <div class="setup-title">SHUTTLE RUN</div>
+                <div class="setup-subtitle">PAPS 왕복오래달리기 기록장</div>
+
+                <label class="setup-label" for="student-count">학생 수 (최대 40명)</label>
+                <div class="stepper">
+                    <button id="btn-minus">−</button>
+                    <input type="number" id="student-count" min="1" max="40" value="20">
+                    <button id="btn-plus">+</button>
+                </div>
+
+                <button id="start-btn" class="start-btn">측정 시작</button>
+            </div>
+            <a href="../index.php" class="home-link">홈으로 돌아가기</a>
+        </div>
+    </div>
+
+    <div id="main-screen">
+        <div class="top-area">
+            <div class="counter-panel">
+                <span class="counter-label">CURRENT LAP</span>
+
+                <!-- 일시정지 / 재생 버튼 -->
+                <div class="playback-controls">
+                    <button id="btn-pause" class="btn-playback playing" title="일시정지 / 재생">▶</button>
+                </div>
+
+                <div id="main-counter">0</div>
+                <span id="time-display" class="timer-display">00:00</span>
+                <span class="audio-credit">음원 출처: 훈쌤커버리</span>
+                <div id="progress-bar" class="progress-track" style="width:0%"></div>
+            </div>
+        </div>
+
+        <div class="grid-scroll">
+            <div id="student-grid" class="student-grid"></div>
+        </div>
+
+        <div class="bottom-bar">
+            <button id="restart-btn" class="btn-secondary">처음으로</button>
+            <span class="help-text">카드 클릭 → 탈락 처리 &nbsp;|&nbsp; 길게 누르기 → 수동 수정</span>
+            <button id="export-btn" class="btn-export">기록 마감</button>
+        </div>
+    </div>
+
+    <div id="result-modal">
+        <div class="modal-box">
+            <div class="modal-title">FINAL RESULT</div>
+            <div class="result-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:50%">번호</th>
+                            <th style="width:50%">기록 (회)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="result-table-body"></tbody>
+                </table>
+            </div>
+            <button id="close-modal-btn" class="btn-close-modal">확인</button>
+        </div>
+    </div>
+
+    <!-- ★ YouTube 스크립트 완전 제거, 로컬 Audio 사용 -->
+    <script>
+        /* ===== STATE ===== */
+        let audio;
+        let isPlaying = false;
+        let currentCount = 0;
+        let syncInterval;
+        let studentsData = [];
+
+        /*
+         * ★★★ 음원 파일 경로 설정 ★★★
+         * 이 HTML 파일과 같은 폴더에 mp3 파일을 두세요.
+         * 파일명이 다르면 아래 경로만 수정하면 됩니다.
+         */
+        const AUDIO_SRC = 'shuttle_run.mp3';
+
+        /* ===== SHUTTLE TIMINGS (공식 비프테스트 표 + 영상 오프셋 29초) ===== */
+        const shuttleTimings = (() => {
+            const OFFSET = 29; // 음원 앞 멘트/안내 시간
+            const stages = [
+                { start: 0     + OFFSET, laps: 7,  lapTime: 9.00 },
+                { start: 63    + OFFSET, laps: 8,  lapTime: 8.00 },
+                { start: 127   + OFFSET, laps: 8,  lapTime: 7.58 },
+                { start: 187.6 + OFFSET, laps: 9,  lapTime: 7.20 },
+                { start: 252.4 + OFFSET, laps: 9,  lapTime: 6.86 },
+                { start: 314.1 + OFFSET, laps: 10, lapTime: 6.55 },
+                { start: 379.6 + OFFSET, laps: 10, lapTime: 6.26 },
+                { start: 442.2 + OFFSET, laps: 11, lapTime: 6.00 },
+                { start: 508.2 + OFFSET, laps: 11, lapTime: 5.76 },
+                { start: 571.6 + OFFSET, laps: 11, lapTime: 5.54 },
+                { start: 632.5 + OFFSET, laps: 12, lapTime: 5.33 },
+                { start: 696.5 + OFFSET, laps: 12, lapTime: 5.14 },
+                { start: 758.2 + OFFSET, laps: 13, lapTime: 4.97 },
+                { start: 822.8 + OFFSET, laps: 13, lapTime: 4.80 },
+                { start: 885.2 + OFFSET, laps: 13, lapTime: 4.65 },
+            ];
+            const beeps = [];
+            stages.forEach(s => {
+                let t = s.start;
+                for (let i = 0; i < s.laps; i++) { beeps.push(t); t += s.lapTime; }
+            });
+            return beeps;
+        })();
+
+        /* ===== AUDIO INIT ===== */
+        function initAudio() {
+            audio = new Audio(AUDIO_SRC);
+            audio.preload = 'auto';
+
+            // 재생/일시정지 상태 추적
+            audio.addEventListener('play', () => {
+                isPlaying = true;
+                startSyncLoop();
+                updatePauseButton();
+            });
+            audio.addEventListener('pause', () => {
+                isPlaying = false;
+                stopSyncLoop();
+                updatePauseButton();
+            });
+            audio.addEventListener('ended', () => {
+                isPlaying = false;
+                stopSyncLoop();
+                updatePauseButton();
+            });
+            // 에러 처리
+            audio.addEventListener('error', () => {
+                alert('음원 파일을 불러올 수 없습니다.\n파일명을 확인해주세요: ' + AUDIO_SRC);
+            });
+        }
+
+        /* ===== SYNC LOOP ===== */
+        function startSyncLoop() {
+            if (syncInterval) clearInterval(syncInterval);
+            syncInterval = setInterval(() => {
+                if (!audio) return;
+                const t = audio.currentTime;
+
+                // 시간 표시
+                const mm = String(Math.floor(t / 60)).padStart(2, '0');
+                const ss = String(Math.floor(t % 60)).padStart(2, '0');
+                document.getElementById('time-display').textContent = `${mm}:${ss}`;
+
+                // 진행률 표시
+                if (audio.duration) {
+                    const pct = (t / audio.duration) * 100;
+                    document.getElementById('progress-bar').style.width = pct + '%';
+                }
+
+                // 카운트 계산
+                let calc = 0;
+                for (let i = 0; i < shuttleTimings.length; i++) {
+                    if (t >= shuttleTimings[i]) calc = i + 1; else break;
+                }
+                if (calc !== currentCount) { currentCount = calc; updateCounter(); }
+            }, 50);
+        }
+
+        function stopSyncLoop() { clearInterval(syncInterval); }
+
+        function updateCounter() {
+            const el = document.getElementById('main-counter');
+            el.textContent = currentCount;
+            el.classList.remove('pop');
+            void el.offsetWidth;
+            el.classList.add('pop');
+        }
+
+        /* ===== PAUSE / PLAY BUTTON ===== */
+        function updatePauseButton() {
+            const btn = document.getElementById('btn-pause');
+            if (isPlaying) {
+                btn.textContent = '⏸';
+                btn.classList.add('playing');
+            } else {
+                btn.textContent = '▶';
+                btn.classList.remove('playing');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            initAudio();
+
+            document.getElementById('btn-pause').addEventListener('click', () => {
+                if (!audio) return;
+                if (isPlaying) {
+                    audio.pause();
+                } else {
+                    audio.play();
+                }
+            });
+        });
+
+        /* ===== SETUP CONTROLS ===== */
+        const countInput = document.getElementById('student-count');
+        document.getElementById('btn-minus').addEventListener('click', () => {
+            const v = parseInt(countInput.value) || 1;
+            if (v > 1) countInput.value = v - 1;
+        });
+        document.getElementById('btn-plus').addEventListener('click', () => {
+            const v = parseInt(countInput.value) || 1;
+            if (v < 40) countInput.value = v + 1;
+        });
+
+        document.getElementById('start-btn').addEventListener('click', () => {
+            const num = parseInt(countInput.value);
+            studentsData = Array.from({ length: num }, (_, i) => ({ id: i + 1, count: null, dropped: false }));
+
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('main-screen').classList.add('visible');
+            renderGrid();
+
+            // ★ 사용자 클릭 이벤트 안에서 play() → 자동재생 정책 통과
+            if (audio) {
+                audio.currentTime = 0;
+                audio.play().catch(err => {
+                    console.warn('자동재생 차단됨, 재생 버튼을 눌러주세요:', err);
+                });
+            }
+        });
+
+        /* ===== STUDENT GRID ===== */
+        function renderGrid() {
+            const grid = document.getElementById('student-grid');
+            grid.innerHTML = '';
+            studentsData.forEach(s => {
+                const card = document.createElement('div');
+                card.className = 's-card';
+                card.dataset.id = s.id;
+                card.innerHTML = `
+                    <span class="s-num">${s.id}</span>
+                    <span class="s-score">0</span>
+                `;
+
+                let timer;
+                const startPress = () => { timer = setTimeout(() => editScore(s.id, card), 700); };
+                const endPress = () => clearTimeout(timer);
+                card.addEventListener('mousedown', startPress);
+                card.addEventListener('touchstart', startPress, { passive: true });
+                card.addEventListener('mouseup', endPress);
+                card.addEventListener('touchend', endPress);
+
+                card.addEventListener('click', () => { if (!s.dropped) dropStudent(s.id, card); });
+                grid.appendChild(card);
+            });
+        }
+
+        function dropStudent(id, el) {
+            const s = studentsData.find(x => x.id === id);
+            s.count = currentCount;
+            s.dropped = true;
+            el.classList.add('dropped');
+            el.querySelector('.s-score').textContent = s.count;
+        }
+
+        function editScore(id, el) {
+            const s = studentsData.find(x => x.id === id);
+            const val = prompt(`${id}번 학생의 기록을 입력하세요:`, s.count ?? currentCount);
+            if (val !== null && !isNaN(val) && val.trim() !== '') {
+                s.count = parseInt(val);
+                s.dropped = true;
+                el.classList.add('dropped');
+                el.querySelector('.s-score').textContent = s.count;
+            }
+        }
+
+        /* ===== BOTTOM CONTROLS ===== */
+        document.getElementById('restart-btn').addEventListener('click', () => {
+            if (confirm('모든 기록을 초기화하고 처음으로 돌아갈까요?')) location.reload();
+        });
+
+        document.getElementById('export-btn').addEventListener('click', () => {
+            if (audio) audio.pause();
+            const tbody = document.getElementById('result-table-body');
+            tbody.innerHTML = '';
+            studentsData.forEach(s => {
+                const tr = document.createElement('tr');
+                const isActive = s.count === null;
+                tr.innerHTML = `
+                    <td class="td-num">${s.id}번</td>
+                    <td class="${isActive ? 'td-active' : 'td-score'}">${isActive ? '진행중' : s.count}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+            document.getElementById('result-modal').classList.add('visible');
+        });
+
+        document.getElementById('close-modal-btn').addEventListener('click', () => {
+            document.getElementById('result-modal').classList.remove('visible');
+            if (audio) {
+                audio.play().catch(() => {});
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>경기 점수판</title>
+    <!-- Tailwind CDN 제거 — 전자칠판에서 외부 스크립트 차단 시 UI 깨짐 방지 -->
+    <!-- <script src="https://cdn.tailwindcss.com"></script> -->
+    <!-- Pretendard 폰트도 CDN이므로 fallback 처리 -->
+    <link rel="stylesheet" crossorigin as="style" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <style>
+        /* ===== 리셋 & 기본 ===== */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', sans-serif;
+            user-select: none;
+            overflow: hidden;
+            background-color: #111;
+            color: white;
+            width: 100vw;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* ===== 유틸리티 (Tailwind 대체) ===== */
+        .w-full { width: 100%; }
+        .h-full { height: 100%; }
+        .w-screen { width: 100vw; }
+        .h-screen { height: 100vh; }
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-center { justify-content: center; }
+        .justify-between { justify-content: space-between; }
+        .relative { position: relative; }
+        .absolute { position: absolute; }
+        .fixed { position: fixed; }
+        .top-0 { top: 0; }
+        .left-0 { left: 0; }
+        .bottom-10 { bottom: 2.5rem; }
+        .left-10 { left: 2.5rem; }
+        .right-10 { right: 2.5rem; }
+        .left-half { left: 50%; }
+        .translate-x-neg50 { transform: translateX(-50%); }
+        .z-10 { z-index: 10; }
+        .z-20 { z-index: 20; }
+        .z-50 { z-index: 50; }
+        .cursor-pointer { cursor: pointer; }
+        .select-none { user-select: none; }
+        .leading-none { line-height: 1; }
+        .text-center { text-align: center; }
+        .gap-4 { gap: 1rem; }
+        .gap-8 { gap: 2rem; }
+        .grid { display: grid; }
+        .grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+
+        /* ===== 간격 ===== */
+        .p-4 { padding: 1rem; }
+        .p-8 { padding: 2rem; }
+        .p-12 { padding: 3rem; }
+        .px-3 { padding-left: 0.75rem; padding-right: 0.75rem; }
+        .px-4 { padding-left: 1rem; padding-right: 1rem; }
+        .px-6 { padding-left: 1.5rem; padding-right: 1.5rem; }
+        .px-8 { padding-left: 2rem; padding-right: 2rem; }
+        .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+        .py-2 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+        .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+        .py-4 { padding-top: 1rem; padding-bottom: 1rem; }
+        .mb-1 { margin-bottom: 0.25rem; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mb-12 { margin-bottom: 3rem; }
+        .mt-2 { margin-top: 0.5rem; }
+        .mt-8 { margin-top: 2rem; }
+        .mt-12 { margin-top: 3rem; }
+
+        /* ===== 텍스트 ===== */
+        .text-sm { font-size: 0.875rem; }
+        .text-xl { font-size: 1.25rem; }
+        .text-2xl { font-size: 1.5rem; }
+        .text-4xl { font-size: 2.25rem; }
+        .text-5xl { font-size: 3rem; }
+        .text-score { font-size: 20rem; }
+        .text-7xl { font-size: 4.5rem; }
+        .font-bold { font-weight: 700; }
+        .font-mono { font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace; }
+        .opacity-80 { opacity: 0.8; }
+        .tracking-widest { letter-spacing: 0.1em; }
+        .underline { text-decoration: underline; }
+
+        /* ===== 색상 ===== */
+        .text-white { color: #ffffff; }
+        .text-yellow-300 { color: #fde047; }
+        .text-yellow-400 { color: #facc15; }
+        .text-green-400 { color: #4ade80; }
+        .text-red-500 { color: #ef4444; }
+        .text-gray-300 { color: #d1d5db; }
+        .text-gray-400 { color: #9ca3af; }
+
+        .bg-black { background-color: #000000; }
+        .bg-gray-700 { background-color: #374151; }
+        .bg-gray-800 { background-color: #1f2937; }
+        .bg-gray-900 { background-color: #111827; }
+        .bg-red-600 { background-color: #dc2626; }
+        .bg-red-800 { background-color: #991b1b; }
+        .bg-blue-600 { background-color: #2563eb; }
+        .bg-blue-800 { background-color: #1e40af; }
+        .bg-emerald-600 { background-color: #059669; }
+        .bg-orange-600 { background-color: #ea580c; }
+        .bg-yellow-600 { background-color: #ca8a04; }
+        .bg-opacity-20 { --bg-opacity: 0.2; }
+        .bg-opacity-30 { --bg-opacity: 0.3; }
+        .bg-opacity-70 { --bg-opacity: 0.7; }
+
+        /* ===== 라운드 & 그림자 ===== */
+        .rounded { border-radius: 0.25rem; }
+        .rounded-lg { border-radius: 0.5rem; }
+        .rounded-xl { border-radius: 0.75rem; }
+        .rounded-2xl { border-radius: 1rem; }
+        .rounded-3xl { border-radius: 1.5rem; }
+        .rounded-full { border-radius: 9999px; }
+        .shadow-lg { box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -4px rgba(0,0,0,0.1); }
+        .border-4 { border-width: 4px; border-style: solid; }
+        .border-red-500 { border-color: #ef4444; }
+
+        /* ===== 특수 컴포넌트 ===== */
+        .menu-btn {
+            border: none;
+            color: white;
+            cursor: pointer;
+            transition: transform 0.15s, filter 0.15s;
+        }
+        .menu-btn:hover { transform: scale(1.05); filter: brightness(1.15); }
+        .menu-btn:active { transform: scale(0.97); }
+
+        .ctrl-btn {
+            border: none;
+            color: white;
+            cursor: pointer;
+        }
+        .ctrl-btn:hover { filter: brightness(1.2); }
+
+        .header-bar {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+            z-index: 20;
+            background-color: rgba(0,0,0,0.3);
+        }
+
+        .team-side {
+            width: 50%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .minus-btn {
+            position: absolute;
+            bottom: 2.5rem;
+            width: 5rem;
+            height: 5rem;
+            border-radius: 9999px;
+            border: none;
+            background-color: rgba(0,0,0,0.2);
+            color: white;
+            font-size: 2.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 20;
+        }
+        .minus-btn:hover { background-color: rgba(0,0,0,0.4); }
+
+        .shot-clock-box {
+            position: absolute;
+            bottom: 2.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 20;
+            background-color: rgba(0,0,0,0.7);
+            padding: 1rem 2rem;
+            border-radius: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 4px solid #ef4444;
+        }
+
+        /* 배구 득점 시 번쩍이는 효과 */
+        .flash-effect { animation: flashAnim 0.6s ease-out; }
+        @keyframes flashAnim {
+            0% { filter: brightness(1); }
+            30% { filter: brightness(2.5); background-color: #fff; }
+            100% { filter: brightness(1); }
+        }
+
+        /* 샷클락 10초 흔들림 효과 */
+        .shake-effect { animation: shakeAnim 0.1s ease-in-out infinite; }
+        @keyframes shakeAnim {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
+        /* 탭 할 때 살짝 눌리는 느낌 */
+        .tap-area:active { filter: brightness(0.9); }
+
+        /* 폭죽 캔버스 */
+        #fireworksCanvas { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; pointer-events: none; z-index: 50; }
+
+        .hidden-view { display: none !important; }
+
+        /* animate-ping 대체 */
+        .animate-ping {
+            animation: ping 1s cubic-bezier(0, 0, 0.2, 1) infinite;
+        }
+        @keyframes ping {
+            75%, 100% { transform: scale(2); opacity: 0; }
+        }
+
+        /* 홈 링크 */
+        .home-link { color: #9ca3af; font-size: 1.25rem; text-decoration: underline; padding: 1rem; margin-top: 3rem; }
+    </style>
+</head>
+<body>
+
+    <!-- 폭죽 효과를 그릴 캔버스 -->
+    <canvas id="fireworksCanvas"></canvas>
+
+    <!-- 1. 메인 메뉴 화면 -->
+    <div id="menuView" style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background-color:#111827;padding:2rem;">
+        <h1 style="font-size:3rem;font-weight:700;margin-bottom:3rem;color:white;">종목을 선택하세요</h1>
+        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:2rem;width:100%;max-width:56rem;">
+            <button onclick="startSport('soccer')" class="menu-btn" style="background-color:#059669;border-radius:1.5rem;padding:3rem;font-size:2.25rem;font-weight:700;">⚽ 축구</button>
+            <button onclick="startSport('basketball')" class="menu-btn" style="background-color:#ea580c;border-radius:1.5rem;padding:3rem;font-size:2.25rem;font-weight:700;">🏀 농구</button>
+            <button onclick="startSport('badminton')" class="menu-btn" style="background-color:#2563eb;border-radius:1.5rem;padding:3rem;font-size:2.25rem;font-weight:700;">🏸 배드민턴</button>
+            <button onclick="startSport('volleyball')" class="menu-btn" style="background-color:#ca8a04;border-radius:1.5rem;padding:3rem;font-size:2.25rem;font-weight:700;">🏐 배구</button>
+        </div>
+        <a href="../index.php" class="home-link">홈으로 돌아가기</a>
+    </div>
+
+    <!-- 2. 점수판 공통 레이아웃 -->
+    <div id="scoreboardView" class="hidden-view" style="width:100%;height:100%;display:flex;position:relative;">
+
+        <!-- 상단 헤더 -->
+        <div class="header-bar">
+            <button onclick="goHome()" class="ctrl-btn" style="background-color:#1f2937;padding:0.75rem 1.5rem;border-radius:0.5rem;font-size:1.5rem;font-weight:700;">← 메뉴</button>
+
+            <!-- 축구 스톱워치 영역 -->
+            <div id="stopwatchContainer" class="hidden-view" style="display:flex;flex-direction:column;align-items:center;">
+                <div style="font-size:3rem;font-family:monospace;font-weight:700;color:#4ade80;cursor:pointer;" id="stopwatchDisplay" onclick="toggleStopwatch()">00:00</div>
+                <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
+                    <button onclick="toggleStopwatch()" class="ctrl-btn" style="font-size:0.875rem;background-color:#374151;padding:0.25rem 0.75rem;border-radius:0.25rem;">재생/일시정지</button>
+                    <button onclick="resetStopwatch()" class="ctrl-btn" style="font-size:0.875rem;background-color:#ef4444;padding:0.25rem 0.75rem;border-radius:0.25rem;">리셋</button>
+                </div>
+            </div>
+
+            <!-- 농구 타이머 영역 -->
+            <div id="timerContainer" class="hidden-view" style="display:flex;flex-direction:column;align-items:center;">
+                <div style="font-size:3rem;font-family:monospace;font-weight:700;color:#facc15;cursor:pointer;" id="mainClock" onclick="toggleClock()">00:00</div>
+                <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
+                    <button onclick="toggleClock()" class="ctrl-btn" style="font-size:0.875rem;background-color:#374151;padding:0.25rem 0.5rem;border-radius:0.25rem;">재생/일시정지</button>
+                    <button onclick="addTime(5)" class="ctrl-btn" style="font-size:0.875rem;background-color:#374151;padding:0.25rem 0.5rem;border-radius:0.25rem;">+5분</button>
+                    <button onclick="addTime(3)" class="ctrl-btn" style="font-size:0.875rem;background-color:#374151;padding:0.25rem 0.5rem;border-radius:0.25rem;">+3분</button>
+                    <button onclick="addTime(1)" class="ctrl-btn" style="font-size:0.875rem;background-color:#374151;padding:0.25rem 0.5rem;border-radius:0.25rem;">+1분</button>
+                    <button onclick="resetClock()" class="ctrl-btn" style="font-size:0.875rem;background-color:#ef4444;padding:0.25rem 0.5rem;border-radius:0.25rem;">리셋</button>
+                </div>
+            </div>
+
+            <button onclick="resetScore()" class="ctrl-btn" style="background-color:#1f2937;padding:0.75rem 1.5rem;border-radius:0.5rem;font-size:1.5rem;font-weight:700;">🔄 초기화</button>
+        </div>
+
+        <!-- 중앙 농구 샷클락 -->
+        <div id="shotClockContainer" class="hidden-view shot-clock-box">
+            <div style="font-size:0.875rem;color:#d1d5db;margin-bottom:0.25rem;">공격 시간 (Shot Clock)</div>
+            <div id="shotClock" style="font-size:4.5rem;font-family:monospace;font-weight:700;color:#ef4444;cursor:pointer;display:inline-block;" onclick="resetShotClock()">24.0</div>
+            <button onclick="resetShotClock()" class="ctrl-btn" style="margin-top:0.5rem;font-size:0.875rem;background-color:#374151;padding:0.5rem 1rem;border-radius:0.25rem;" id="shotClockBtn">리셋</button>
+        </div>
+
+        <!-- 왼쪽 팀 (HOME) -->
+        <div id="leftSide" class="tap-area team-side" style="background-color:#dc2626;" onclick="handleTap('left', event)">
+            <div style="font-size:2.25rem;font-weight:700;margin-bottom:1rem;opacity:0.8;" id="leftTeamName">TEAM A</div>
+            <div id="leftServe" class="hidden-view" style="font-size:2.25rem;font-weight:700;color:#fde047;margin-bottom:0.5rem;letter-spacing:0.1em;">🏐 SERVE</div>
+            <div id="leftScore" style="font-size:20rem;font-weight:700;line-height:1;user-select:none;">0</div>
+
+            <!-- 세트 스코어 -->
+            <div id="leftSetContainer" class="hidden-view" style="font-size:3rem;font-weight:700;margin-top:2rem;color:#fde047;">세트: <span id="leftSet">0</span></div>
+
+            <!-- 파울 (농구) -->
+            <div id="leftFoulContainer" class="hidden-view" style="font-size:2.25rem;font-weight:700;margin-top:2rem;color:white;background-color:#991b1b;padding:0.5rem 1.5rem;border-radius:0.75rem;cursor:pointer;" onclick="event.stopPropagation(); addFoul('left')">파울: <span id="leftFoul">0</span></div>
+
+            <!-- 점수 빼기 버튼 -->
+            <button onclick="event.stopPropagation(); subScore('left')" class="minus-btn" style="left:2.5rem;">-</button>
+        </div>
+
+        <!-- 오른쪽 팀 (AWAY) -->
+        <div id="rightSide" class="tap-area team-side" style="background-color:#2563eb;" onclick="handleTap('right', event)">
+            <div style="font-size:2.25rem;font-weight:700;margin-bottom:1rem;opacity:0.8;" id="rightTeamName">TEAM B</div>
+            <div id="rightServe" class="hidden-view" style="font-size:2.25rem;font-weight:700;color:#fde047;margin-bottom:0.5rem;letter-spacing:0.1em;">🏐 SERVE</div>
+            <div id="rightScore" style="font-size:20rem;font-weight:700;line-height:1;user-select:none;">0</div>
+
+            <!-- 세트 스코어 -->
+            <div id="rightSetContainer" class="hidden-view" style="font-size:3rem;font-weight:700;margin-top:2rem;color:#fde047;">세트: <span id="rightSet">0</span></div>
+
+            <!-- 파울 (농구) -->
+            <div id="rightFoulContainer" class="hidden-view" style="font-size:2.25rem;font-weight:700;margin-top:2rem;color:white;background-color:#1e40af;padding:0.5rem 1.5rem;border-radius:0.75rem;cursor:pointer;" onclick="event.stopPropagation(); addFoul('right')">파울: <span id="rightFoul">0</span></div>
+
+            <!-- 점수 빼기 버튼 -->
+            <button onclick="event.stopPropagation(); subScore('right')" class="minus-btn" style="right:2.5rem;">-</button>
+        </div>
+
+    </div>
+
+    <script>
+        // --- 상태 관리 ---
+        let currentMode = ''; // soccer, basketball, badminton, volleyball
+        let scores = { left: 0, right: 0 };
+        let sets = { left: 0, right: 0 };
+        let fouls = { left: 0, right: 0 };
+        
+        // 타이머 관련
+        let clockTime = 0; // 농구 0분에서 시작
+        let stopwatchTime = 0; // 축구 스톱워치
+        let shotTime = 240; // 24.0초 (0.1초 단위 처리를 위해 * 10)
+        let clockInterval = null;
+        let shotInterval = null;
+        let clockRunning = false;
+        let stopwatchRunning = false;
+        let shotRunning = false;
+
+        // --- 요소 캐싱 ---
+        const menuView = document.getElementById('menuView');
+        const scoreboardView = document.getElementById('scoreboardView');
+        
+        // --- 네비게이션 ---
+        function startSport(mode) {
+            currentMode = mode;
+            menuView.classList.add('hidden-view');
+            scoreboardView.classList.remove('hidden-view');
+            resetScore();
+            setupUI();
+        }
+
+        function goHome() {
+            scoreboardView.classList.add('hidden-view');
+            menuView.classList.remove('hidden-view');
+            pauseTimers();
+        }
+
+        // --- UI 설정 ---
+        function setupUI() {
+            // 모든 특수 컨테이너 숨기기
+            document.getElementById('timerContainer').classList.add('hidden-view');
+            document.getElementById('stopwatchContainer').classList.add('hidden-view');
+            document.getElementById('shotClockContainer').classList.add('hidden-view');
+            document.getElementById('leftSetContainer').classList.add('hidden-view');
+            document.getElementById('rightSetContainer').classList.add('hidden-view');
+            document.getElementById('leftFoulContainer').classList.add('hidden-view');
+            document.getElementById('rightFoulContainer').classList.add('hidden-view');
+            document.getElementById('leftServe').classList.add('hidden-view');
+            document.getElementById('rightServe').classList.add('hidden-view');
+
+            // 종목별 UI 켜기
+            if (currentMode === 'soccer') {
+                document.getElementById('stopwatchContainer').classList.remove('hidden-view');
+                updateStopwatchDisplay();
+            } else if (currentMode === 'basketball') {
+                document.getElementById('timerContainer').classList.remove('hidden-view');
+                document.getElementById('shotClockContainer').classList.remove('hidden-view');
+                document.getElementById('leftFoulContainer').classList.remove('hidden-view');
+                document.getElementById('rightFoulContainer').classList.remove('hidden-view');
+                updateTimerDisplay();
+                updateShotDisplay();
+            } else if (currentMode === 'badminton' || currentMode === 'volleyball') {
+                document.getElementById('leftSetContainer').classList.remove('hidden-view');
+                document.getElementById('rightSetContainer').classList.remove('hidden-view');
+                if(currentMode === 'volleyball') {
+                    document.getElementById('leftServe').innerText = '🏐 SERVE';
+                    document.getElementById('rightServe').innerText = '🏐 SERVE';
+                } else {
+                    document.getElementById('leftServe').innerText = '🏸 SERVE';
+                    document.getElementById('rightServe').innerText = '🏸 SERVE';
+                }
+            }
+        }
+
+        // --- 터치 이벤트 핸들러 ---
+        function handleTap(side, event) {
+            scores[side]++;
+            updateDisplay();
+            playScoreSound();
+
+            // 1. 축구: 폭죽 효과
+            if (currentMode === 'soccer') {
+                createFireworks(event.clientX, event.clientY);
+            }
+
+            // 2. 배구: 번쩍이는 효과 및 서브권 표시
+            if (currentMode === 'volleyball' || currentMode === 'badminton') {
+                const sideElem = document.getElementById(side + 'Side');
+                // 애니메이션 리셋을 위한 꼼수 (제거 후 다시 추가)
+                sideElem.classList.remove('flash-effect');
+                void sideElem.offsetWidth; // reflow 트리거
+                sideElem.classList.add('flash-effect');
+
+                // 서브권 아이콘 표시
+                document.getElementById('leftServe').classList.add('hidden-view');
+                document.getElementById('rightServe').classList.add('hidden-view');
+                document.getElementById(side + 'Serve').classList.remove('hidden-view');
+
+                // 21점 달성 시 세트 승리 처리 (21점 3세트 기준)
+                if (scores[side] >= 21 && scores[side] - scores[side === 'left' ? 'right' : 'left'] >= 2) {
+                    setTimeout(() => {
+                        sets[side]++;
+                        alert((side === 'left' ? 'TEAM A' : 'TEAM B') + ' 세트 승리!');
+                        scores.left = 0;
+                        scores.right = 0;
+                        updateDisplay();
+                    }, 100);
+                }
+            }
+            
+            // 농구 샷클락 리셋 (득점 시 자동으로 공격권이 넘어가며 24초 리셋)
+            if (currentMode === 'basketball') {
+                resetShotClock();
+            }
+        }
+
+        function subScore(side) {
+            if (scores[side] > 0) scores[side]--;
+            updateDisplay();
+        }
+
+        function addFoul(side) {
+            fouls[side]++;
+            updateDisplay();
+        }
+
+        function resetScore() {
+            scores = { left: 0, right: 0 };
+            sets = { left: 0, right: 0 };
+            fouls = { left: 0, right: 0 };
+            document.getElementById('leftServe').classList.add('hidden-view');
+            document.getElementById('rightServe').classList.add('hidden-view');
+            updateDisplay();
+        }
+
+        function updateDisplay() {
+            document.getElementById('leftScore').innerText = scores.left;
+            document.getElementById('rightScore').innerText = scores.right;
+            document.getElementById('leftSet').innerText = sets.left;
+            document.getElementById('rightSet').innerText = sets.right;
+            document.getElementById('leftFoul').innerText = fouls.left;
+            document.getElementById('rightFoul').innerText = fouls.right;
+        }
+
+        // --- 효과음 로직 ---
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playScoreSound() {
+            if(audioCtx.state === 'suspended') audioCtx.resume();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(880, audioCtx.currentTime);
+            oscillator.frequency.exponentialRampToValueAtTime(1760, audioCtx.currentTime + 0.1);
+            gainNode.gain.setValueAtTime(0.5, audioCtx.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.3);
+        }
+
+        // --- 타이머 & 스톱워치 로직 ---
+        setInterval(() => {
+            if (clockRunning && clockTime > 0) {
+                clockTime--;
+                updateTimerDisplay();
+                if (clockTime <= 0) pauseTimers();
+            }
+            if (stopwatchRunning) {
+                stopwatchTime++;
+                updateStopwatchDisplay();
+            }
+        }, 1000);
+
+        setInterval(() => {
+            if (shotRunning && shotTime > 0) {
+                shotTime--;
+                updateShotDisplay();
+                
+                const shotClockElem = document.getElementById('shotClock');
+                // 10초(100) 이하로 남았을 때 흔들림 효과 추가
+                if (shotTime > 0 && shotTime <= 100) {
+                    shotClockElem.classList.add('shake-effect');
+                } else {
+                    shotClockElem.classList.remove('shake-effect');
+                }
+
+                if (shotTime <= 0) {
+                    shotRunning = false;
+                    shotClockElem.classList.remove('shake-effect');
+                    shotClockElem.classList.add('animate-ping');
+                    setTimeout(() => shotClockElem.classList.remove('animate-ping'), 1000);
+                }
+            }
+        }, 100);
+
+        function toggleClock() {
+            if (clockRunning) pauseTimers();
+            else startTimers();
+        }
+
+        function addTime(minutes) {
+            clockTime += minutes * 60;
+            updateTimerDisplay();
+        }
+
+        function toggleStopwatch() {
+            stopwatchRunning = !stopwatchRunning;
+            document.getElementById('stopwatchDisplay').style.color = stopwatchRunning ? '#facc15' : '#4ade80';
+        }
+
+        function resetStopwatch() {
+            stopwatchRunning = false;
+            stopwatchTime = 0;
+            document.getElementById('stopwatchDisplay').style.color = '#4ade80';
+            updateStopwatchDisplay();
+        }
+
+        function startTimers() {
+            clockRunning = true;
+            shotRunning = true;
+            document.getElementById('mainClock').style.color = '#4ade80';
+        }
+
+        function pauseTimers() {
+            clockRunning = false;
+            shotRunning = false;
+            stopwatchRunning = false;
+            document.getElementById('mainClock').style.color = '#facc15';
+            document.getElementById('stopwatchDisplay').style.color = '#4ade80';
+        }
+
+        function resetClock() {
+            pauseTimers();
+            clockTime = 0;
+            updateTimerDisplay();
+        }
+
+        function toggleShotClock() {
+            shotRunning = !shotRunning;
+        }
+
+        function resetShotClock() {
+            shotTime = 240; // 24.0 초
+            updateShotDisplay();
+            document.getElementById('shotClock').classList.remove('shake-effect');
+            document.getElementById('shotClock').classList.remove('animate-ping');
+        }
+
+        function updateTimerDisplay() {
+            let m = Math.floor(clockTime / 60).toString().padStart(2, '0');
+            let s = (clockTime % 60).toString().padStart(2, '0');
+            document.getElementById('mainClock').innerText = `${m}:${s}`;
+        }
+
+        function updateStopwatchDisplay() {
+            let m = Math.floor(stopwatchTime / 60).toString().padStart(2, '0');
+            let s = (stopwatchTime % 60).toString().padStart(2, '0');
+            document.getElementById('stopwatchDisplay').innerText = `${m}:${s}`;
+        }
+
+        function updateShotDisplay() {
+            let s = Math.floor(shotTime / 10);
+            let ms = shotTime % 10;
+            document.getElementById('shotClock').innerText = `${s}.${ms}`;
+        }
+
+        // --- 축구 폭죽 효과 로직 (HTML5 Canvas) ---
+        const canvas = document.getElementById('fireworksCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        function createFireworks(x, y) {
+            const colors = ['#ff0000', '#00ff00', '#0000ff', '#ffff00', '#ff00ff', '#00ffff', '#ffffff'];
+            for (let i = 0; i < 50; i++) {
+                particles.push({
+                    x: x,
+                    y: y,
+                    vx: (Math.random() - 0.5) * 20,
+                    vy: (Math.random() - 0.5) * 20,
+                    life: 1,
+                    color: colors[Math.floor(Math.random() * colors.length)]
+                });
+            }
+        }
+
+        function animateFireworks() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i];
+                p.x += p.vx;
+                p.y += p.vy;
+                p.vy += 0.5; // 중력
+                p.life -= 0.02; // 사라지는 속도
+
+                if (p.life <= 0) {
+                    particles.splice(i, 1);
+                } else {
+                    ctx.globalAlpha = p.life;
+                    ctx.fillStyle = p.color;
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, 8, 0, Math.PI * 2);
+                    ctx.fill();
+                }
+            }
+            ctx.globalAlpha = 1.0;
+            requestAnimationFrame(animateFireworks);
+        }
+        animateFireworks();
+
+    </script>
+</body>
+</html>

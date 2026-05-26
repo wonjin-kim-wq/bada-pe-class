@@ -1,10 +1,25 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+    <!-- 1. 브라우저가 글자 인코딩부터 파악할 수 있도록 가장 최상단 배치 -->
     <meta charset="UTF-8">
+
+    <!-- 2. Google Analytics (gtag.js) 구글 태그 -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-TKGDQZKW20"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-TKGDQZKW20');
+    </script>
+
+    <!-- 3. 모바일 뷰포트 및 폰트 웹서비스 링크 설정 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>바다쌤의 체육수업 | Smart Hub</title>
     <link rel="stylesheet" crossorigin as="style" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    
+    <!-- 4. 단 하나로 합쳐진 무결점 CSS 스타일 보드 -->
     <style>
         :root {
             --blue-50: #eff6ff;
@@ -139,7 +154,6 @@
             gap: 12px;
         }
 
-        /* 명언 버튼 스타일 추가 */
         .saying-btn {
             background: rgba(245, 158, 11, 0.15);
             border: 1px solid rgba(245, 158, 11, 0.3);
@@ -486,11 +500,15 @@
             opacity: 0.06;
         }
 
-        /* ── 하단 ── */
-        <footer>
-            <div class="divider"></div>
-            © 2026 Physical Education Smart Hub. All rights reserved.
-        </footer>
+        /* ── 하단 푸터 ── */
+        footer {
+            margin-top: 50px;
+            padding: 30px 0;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--slate-500);
+        }
 
         /* 알림 메시지 스타일 */
         #toast {
@@ -799,12 +817,14 @@
 </head>
 <body>
 
+    <!-- 5. 백그라운드 그리드 레이아웃 -->
     <div class="bg-grid">
         <div class="bg-orb bg-orb-1"></div>
         <div class="bg-orb bg-orb-2"></div>
         <div class="bg-orb bg-orb-3"></div>
     </div>
 
+    <!-- 6. 본문 내용물 -->
     <div class="content-wrapper">
 
         <nav class="top-bar">
@@ -1009,12 +1029,12 @@
         </div>
 
         <footer>
-            <div class="divider"></div>
             © 2026 Physical Education Smart Hub. All rights reserved.
         </footer>
 
     </div>
 
+    <!-- 7. 우측 스톱워치/타이머 컴포넌트 -->
     <button class="sw-toggle" onclick="toggleStopwatchPanel()" id="swToggle">⏱️</button>
 
     <div class="stopwatch-panel" id="stopwatchPanel">
@@ -1051,6 +1071,7 @@
 
     <div id="toast"></div>
 
+    <!-- 8. 브라우저 실시간 하드웨어 가동 스크립트 엔진 -->
     <script>
         // ── 스톱워치 로직 ──
         let timerInterval = null;
@@ -1078,7 +1099,6 @@
                 display.textContent = formatTime(remaining);
                 msDisplay.textContent = '';
 
-                // 10초 이하 경고
                 if (remaining <= 10 && remaining > 0) {
                     display.classList.add('warning');
                 } else {
@@ -1121,7 +1141,6 @@
                         stopTimer();
                         triggerAlarm();
                     }
-                    // 정수 단위로 표시 (카운트다운)
                     const remaining = Math.ceil(totalSeconds);
                     display.textContent = formatTime(remaining);
                     if (remaining <= 10 && remaining > 0) {
@@ -1166,10 +1185,8 @@
             const overlay = document.getElementById('alarmOverlay');
             overlay.classList.add('active');
 
-            // Web Audio API로 알람음 생성
             playAlarmSound();
 
-            // 3초 뒤 알람 종료
             alarmTimeout = setTimeout(() => {
                 overlay.classList.remove('active');
                 stopAlarmSound();
@@ -1192,7 +1209,6 @@
                 alarmGain.gain.value = 0.5;
                 alarmGain.connect(audioCtx.destination);
 
-                // 반복 비프음
                 function beepCycle() {
                     if (!audioCtx) return;
                     const osc = audioCtx.createOscillator();
@@ -1210,7 +1226,6 @@
                     alarmOscillators.push(osc);
                 }
 
-                // 3초 동안 비프음 반복 (0.25초 간격)
                 for (let i = 0; i < 12; i++) {
                     setTimeout(beepCycle, i * 250);
                 }
@@ -1230,13 +1245,11 @@
             }
         }
 
-        // ── 모바일 토글 ──
         function toggleStopwatchPanel() {
             const panel = document.getElementById('stopwatchPanel');
             panel.classList.toggle('open');
         }
 
-        // ── 기존 토스트 ──
         function showToast(message) {
             const toast = document.getElementById('toast');
             toast.innerText = message;

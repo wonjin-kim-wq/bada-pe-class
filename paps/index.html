@@ -227,7 +227,7 @@
         #main-counter {
             font-family: 'Orbitron', sans-serif;
             font-size: clamp(240px, 60vw, 60dvh);
-            font-weight: 900;
+            font-weight: 950;
             color: var(--accent-red);
             line-height: 1;
             text-shadow: 0 0 40px var(--accent-red-glow);
@@ -561,7 +561,7 @@
 
                 <button id="start-btn" class="start-btn">측정 시작</button>
             </div>
-            <a href="../index.php" class="home-link">홈으로 돌아가기</a>
+            <a href="/" class="home-link">홈으로 돌아가기</a>
         </div>
     </div>
 
@@ -621,7 +621,6 @@
     <!-- 토스트 피드백 알림창 -->
     <div id="paps-toast"></div>
 
-    <!-- ★ YouTube 스크립트 완전 제거, 로컬 Audio 사용 -->
     <script>
         /* ===== STATE ===== */
         let audio;
@@ -699,8 +698,9 @@
                 document.getElementById('time-display').textContent = `${mm}:${ss}`;
 
                 // 진행률 표시
-                if (audio.duration) {
-                    const pct = (t / audio.duration) * 100;
+                const duration = audio.duration;
+                if (duration && !isNaN(duration) && isFinite(duration)) {
+                    const pct = (t / duration) * 100;
                     document.getElementById('progress-bar').style.width = pct + '%';
                 }
 
@@ -813,21 +813,46 @@
             studentsData.forEach(s => {
                 const card = document.createElement('div');
                 card.className = 's-card';
+                if (s.dropped) {
+                    card.classList.add('dropped');
+                }
                 card.dataset.id = s.id;
                 card.innerHTML = `
                     <span class="s-num">${s.id}</span>
-                    <span class="s-score">0</span>
+                    <span class="s-score">${s.count !== null ? s.count : 0}</span>
                 `;
 
                 let timer;
-                const startPress = () => { timer = setTimeout(() => editScore(s.id, card), 700); };
-                const endPress = () => clearTimeout(timer);
+                let isLongPress = false;
+
+                const startPress = () => { 
+                    isLongPress = false;
+                    timer = setTimeout(() => { 
+                        isLongPress = true;
+                        editScore(s.id, card); 
+                    }, 650); 
+                };
+
+                const endPress = () => {
+                    clearTimeout(timer);
+                };
+
                 card.addEventListener('mousedown', startPress);
                 card.addEventListener('touchstart', startPress, { passive: true });
                 card.addEventListener('mouseup', endPress);
                 card.addEventListener('touchend', endPress);
 
-                card.addEventListener('click', () => { if (!s.dropped) dropStudent(s.id, card); });
+                card.addEventListener('click', () => { 
+                    if (isLongPress) {
+                        isLongPress = false;
+                        return;
+                    }
+                    if (!s.dropped) {
+                        dropStudent(s.id, card); 
+                    } else {
+                        editScore(s.id, card);
+                    }
+                });
                 grid.appendChild(card);
             });
         }
@@ -842,12 +867,19 @@
 
         function editScore(id, el) {
             const s = studentsData.find(x => x.id === id);
-            const val = prompt(`${id}번 학생의 기록을 입력하세요:`, s.count ?? currentCount);
-            if (val !== null && !isNaN(val) && val.trim() !== '') {
-                s.count = parseInt(val);
-                s.dropped = true;
-                el.classList.add('dropped');
-                el.querySelector('.s-score').textContent = s.count;
+            const val = prompt(`${id}번 학생의 기록을 입력하세요:\n(빈 칸으로 제출 시 탈락 취소 및 진행중 상태로 복구됩니다)`, s.count !== null ? s.count : currentCount);
+            if (val !== null) {
+                if (val.trim() === '') {
+                    s.count = null;
+                    s.dropped = false;
+                    el.classList.remove('dropped');
+                    el.querySelector('.s-score').textContent = '0';
+                } else if (!isNaN(val)) {
+                    s.count = parseInt(val);
+                    s.dropped = true;
+                    el.classList.add('dropped');
+                    el.querySelector('.s-score').textContent = s.count;
+                }
             }
         }
 

@@ -1,1022 +1,865 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ko">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>바다쌤의 PAPS 셔틀런 기록메이트</title>
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- SheetJS (XLSX) CDN -->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAPS 셔틀런 기록장 & 메일 전송기</title>
+    <!-- 구글 폰트 및 아이콘 수급 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;800;900&family=Orbitron:wght@750;900&display=swap" rel="stylesheet">
+    <!-- SheetJS (실제 엑셀 바이너리 파일 생성을 위한 엔진) -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
     <style>
-      /* Chrome, Safari, Edge, Opera 에서 스피너(위아래 화살표) 제거 */
-      input::-webkit-outer-spin-button,
-      input::-webkit-inner-spin-button {
-        -webkit-appearance: none;
-        margin: 0;
-      }
-      /* Firefox 에서 스피너(위아래 화살표) 제거 */
-      input[type="number"] {
-        -moz-appearance: textfield;
-      }
-      .electric-glow {
-        box-shadow: 0 0 25px -5px rgba(59, 130, 246, 0.2), 0 0 15px -5px rgba(6, 182, 212, 0.15);
-      }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg-deep: #0a0e1a;
+            --bg-card: #111827;
+            --bg-surface: #1a2236;
+            --border: #1e2d4a;
+            --text-primary: #e8ecf4;
+            --text-muted: #6b7a94;
+            --accent-red: #ef4444;
+            --accent-red-glow: rgba(239, 68, 68, 0.4);
+            --accent-blue: #3b82f6;
+            --accent-blue-deep: #1d4ed8;
+            --accent-blue-glow: rgba(59, 130, 246, 0.3);
+            --card-active: linear-gradient(135deg, #1e3a5f, #162d50);
+            --card-dropped: linear-gradient(135deg, #1a1a2e, #16162a);
+            --success: #10b981;
+        }
+
+        body {
+            font-family: 'Noto Sans KR', sans-serif;
+            background: var(--bg-deep);
+            color: var(--text-primary);
+            user-select: none;
+            overflow-x: hidden;
+            min-height: 100dvh;
+        }
+
+        /* ===== SETUP SCREEN ===== */
+        #setup-screen {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100dvh;
+            padding: 24px;
+        }
+
+        .setup-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            width: 100%;
+            max-width: 420px;
+        }
+
+        .setup-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px 28px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 80px var(--accent-blue-glow);
+        }
+
+        .setup-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 26px;
+            font-weight: 900;
+            color: var(--accent-blue);
+            letter-spacing: 2px;
+            margin-bottom: 8px;
+            text-shadow: 0 0 20px var(--accent-blue-glow);
+        }
+
+        .setup-subtitle {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 28px;
+            letter-spacing: 0.5px;
+        }
+
+        .setup-label {
+            display: block;
+            text-align: left;
+            font-size: 13px;
+            font-weight: 700;
+            color: #94a3b8;
+            margin-bottom: 8px;
+            letter-spacing: 0.5px;
+        }
+
+        .stepper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .stepper button {
+            width: 48px;
+            height: 48px;
+            border: 1px solid var(--border);
+            background: var(--bg-surface);
+            color: var(--text-primary);
+            font-size: 20px;
+            font-weight: 700;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .stepper button:hover { background: #243352; border-color: var(--accent-blue); }
+        .stepper button:active { transform: scale(0.93); }
+
+        .stepper input {
+            flex: 1;
+            background: var(--bg-deep);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            text-align: center;
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text-primary);
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .stepper input:focus { border-color: var(--accent-blue); }
+
+        .input-email {
+            width: 100%;
+            background: var(--bg-deep);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 15px;
+            color: var(--text-primary);
+            outline: none;
+            transition: border-color 0.2s;
+            margin-bottom: 28px;
+            text-align: center;
+        }
+        .input-email:focus { border-color: var(--accent-blue); }
+
+        .start-btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 14px;
+            font-size: 17px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.3s;
+            letter-spacing: 1px;
+            background: linear-gradient(135deg, var(--accent-blue-deep), var(--accent-blue));
+            color: #fff;
+            box-shadow: 0 4px 24px var(--accent-blue-glow);
+        }
+        .start-btn:hover { box-shadow: 0 6px 32px rgba(59,130,246,0.5); transform: translateY(-1px); }
+        .start-btn:active { transform: translateY(0) scale(0.98); }
+
+        .home-link {
+            font-size: 14px;
+            color: var(--text-muted);
+            text-decoration: none;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .home-link:hover { color: var(--text-primary); }
+
+        /* ===== MAIN SCREEN ===== */
+        #main-screen {
+            display: none;
+            flex-direction: column;
+            height: 100dvh;
+            padding: 12px;
+            max-width: 1280px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        #main-screen.visible { display: flex; }
+
+        .top-area {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+            height: 50dvh;
+            min-height: 260px;
+        }
+
+        .counter-panel {
+            flex: 1;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .counter-label {
+            position: absolute;
+            top: 14px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            letter-spacing: 4px;
+            text-transform: uppercase;
+        }
+
+        #main-counter {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(180px, 45vw, 45dvh);
+            font-weight: 900;
+            color: var(--accent-red);
+            line-height: 1;
+            text-shadow: 0 0 40px var(--accent-red-glow);
+            transition: text-shadow 0.2s;
+        }
+
+        @keyframes counter-pop {
+            0% { transform: scale(1); }
+            40% { transform: scale(1.08); text-shadow: 0 0 60px var(--accent-red-glow); }
+            100% { transform: scale(1); }
+        }
+        #main-counter.pop { animation: counter-pop 0.25s ease-out; }
+
+        .timer-display {
+            position: absolute;
+            bottom: 32px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 13px;
+            color: var(--text-muted);
+            letter-spacing: 2px;
+        }
+
+        .playback-controls {
+            position: absolute;
+            top: 14px;
+            right: 16px;
+            display: flex;
+            gap: 8px;
+        }
+        .btn-playback {
+            width: 36px;
+            height: 36px;
+            border: 1px solid var(--border);
+            background: var(--bg-surface);
+            color: var(--text-muted);
+            font-size: 16px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .btn-playback:hover { background: #243352; color: var(--text-primary); border-color: var(--accent-blue); }
+        .btn-playback.playing { color: var(--success); border-color: var(--success); }
+
+        .progress-track {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-blue), #06b6d4);
+            transition: width 0.1s linear;
+        }
+
+        /* Student Grid */
+        .grid-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 4px;
+            padding-bottom: 8px;
+        }
+        .grid-scroll::-webkit-scrollbar { width: 5px; }
+        .grid-scroll::-webkit-scrollbar-thumb { background: #2a3550; border-radius: 10px; }
+
+        .student-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+        }
+
+        .s-card {
+            background: var(--card-active);
+            border: 2px solid #2a4a7a;
+            border-radius: 14px;
+            padding: 12px 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100px;
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+        .s-card:hover { border-color: var(--accent-blue); box-shadow: 0 0 16px var(--accent-blue-glow); }
+
+        .s-card .s-num {
+            font-size: 22px;
+            font-weight: 800;
+            color: #a0c4ff;
+        }
+        .s-card .s-score {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 28px;
+            font-weight: 900;
+            color: var(--accent-red);
+            margin-top: 4px;
+            opacity: 0;
+            transform: translateY(6px);
+            transition: all 0.3s ease;
+        }
+
+        .s-card.dropped {
+            background: var(--card-dropped);
+            border-color: #2a2a3e;
+            cursor: default;
+        }
+        .s-card.dropped .s-num { color: #555a70; }
+        .s-card.dropped .s-score { opacity: 1; transform: translateY(0); }
+
+        /* Bottom Controls */
+        .bottom-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 0 4px;
+            gap: 12px;
+        }
+
+        .btn-secondary {
+            padding: 10px 20px;
+            border: 1px solid var(--border);
+            background: var(--bg-surface);
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 600;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-secondary:hover { background: #243352; color: var(--text-primary); }
+
+        .btn-export {
+            padding: 12px 28px;
+            border: none;
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
+            color: #fff;
+            font-size: 14px;
+            font-weight: 850;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        /* ===== RESULT MODAL ===== */
+        #result-modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.92);
+            backdrop-filter: blur(8px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        #result-modal.visible { display: flex; }
+
+        .modal-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px;
+            width: 100%;
+            max-width: 440px;
+            max-height: 90dvh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        }
+
+        .modal-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--accent-blue);
+            text-align: center;
+            margin-bottom: 20px;
+            letter-spacing: 2.5px;
+        }
+
+        .result-scroll {
+            flex: 1;
+            overflow-y: auto;
+            background: var(--bg-deep);
+            border-radius: 12px;
+            padding: 12px 16px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .result-scroll table { width: 100%; border-collapse: collapse; }
+        .result-scroll th {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            padding: 8px 4px 12px;
+            border-bottom: 1px solid var(--border);
+            text-align: center;
+        }
+        .result-scroll td {
+            padding: 10px 4px;
+            text-align: center;
+            border-bottom: 1px solid rgba(30,45,74,0.4);
+            font-size: 15px;
+        }
+        .result-scroll tr:last-child td { border-bottom: none; }
+        .result-scroll .td-num { font-weight: 600; color: #80a8d0; }
+        .result-scroll .td-score { font-weight: 900; color: var(--accent-red); }
+
+        .email-send-area {
+            background: var(--bg-surface);
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 16px;
+        }
+
+        .email-send-area label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            font-weight: 700;
+        }
+
+        .email-status-text {
+            font-size: 12px;
+            margin-top: 8px;
+            text-align: center;
+            line-height: 1.5;
+        }
+
+        .btn-email-submit {
+            width: 100%;
+            padding: 12px;
+            border: none;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent-blue-deep), var(--accent-blue));
+            color: white;
+            font-weight: 800;
+            font-size: 14px;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .btn-email-submit:hover { opacity: 0.9; }
+
+        .btn-close-modal {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 12px;
+            background: #27272a;
+            color: #d4d4d8;
+            font-size: 15px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .btn-close-modal:hover { background: #3f3f46; }
+
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 768px) {
+            .top-area { flex-direction: column; height: auto; }
+            .student-grid { grid-template-columns: repeat(4, 1fr); }
+        }
+        @media (max-width: 480px) {
+            #main-counter { font-size: 40vw; }
+            .student-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+            .s-card { min-height: 85px; }
+        }
     </style>
-  </head>
-  <body class="min-h-screen bg-slate-950 text-slate-100 font-sans relative overflow-x-hidden pb-10">
-    
-    <!-- 장식용 에테르 오라 효과 (배경) -->
-    <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0">
-      <div class="absolute top-[-10%] left-[-10%] w-[600px] h-[600px] rounded-full bg-blue-900/10 blur-[130px]"></div>
-      <div class="absolute bottom-[20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-cyan-900/10 blur-[120px]"></div>
+</head>
+<body>
+
+    <!-- 설정 및 이메일 입력 화면 -->
+    <div id="setup-screen">
+        <div class="setup-container">
+            <div class="setup-box">
+                <div class="setup-title">SHUTTLE RUN</div>
+                <div class="setup-subtitle">PAPS 왕복오래달리기 기록장</div>
+
+                <label class="setup-label" for="student-count">측정 학생 수 (최대 40명)</label>
+                <div class="stepper">
+                    <button id="btn-minus">−</button>
+                    <input type="number" id="student-count" min="1" max="40" value="20">
+                    <button id="btn-plus">+</button>
+                </div>
+
+                <label class="setup-label" for="teacher-email">교사 이메일 주소</label>
+                <input type="email" id="teacher-email" class="input-email" placeholder="교사 메일주소@naver.com" required>
+
+                <button id="start-btn" class="start-btn">측정 시작하기</button>
+            </div>
+            <a href="../index.html" class="home-link">홈으로 돌아가기</a>
+        </div>
     </div>
 
-    <!-- 헤더 네비게이션 -->
-    <nav class="relative z-10 border-b border-slate-900 bg-slate-950/80 backdrop-blur-md sticky top-0 px-6 py-4 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-gradient-to-tr from-blue-600 to-cyan-500 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-          <!-- Timer Icon (SVG) -->
-          <svg class="w-5 h-5 text-white animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <polyline points="12 6 12 12 16 14"></polyline>
-            <circle cx="12" cy="12" r="10"></circle>
-          </svg>
-        </div>
-        <div>
-          <span class="text-sm text-blue-400 font-bold tracking-wider uppercase block">PAPS SMART HUB</span>
-          <span class="text-white font-extrabold text-base tracking-tight hover:text-cyan-400 transition-colors">
-            바다쌤의 셔틀런 기록메이트
-          </span>
-        </div>
-      </div>
-      <div class="flex items-center gap-2">
-        <span class="bg-blue-950/80 border border-blue-800/50 text-xs px-3 py-1.5 rounded-full text-blue-300 font-bold tracking-wide">
-          2026 PREMIUM EDITION
-        </span>
-      </div>
-    </nav>
+    <!-- 주 측정 보드 화면 -->
+    <div id="main-screen">
+        <div class="top-area">
+            <div class="counter-panel">
+                <span class="counter-label">CURRENT LAP</span>
 
-    <!-- 본문 콘텐츠 레이어 -->
-    <main class="max-w-5xl mx-auto px-4 mt-8 relative z-10">
-      
-      <!-- ==================== 1. SETUP SCREEN ==================== -->
-      <div id="screen-setup" class="max-w-2xl mx-auto mt-6">
-        <div class="bg-slate-900/80 border border-slate-800/60 rounded-3xl p-8 shadow-2xl electric-glow">
-          <h1 class="text-3xl font-extrabold text-center tracking-tight bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent mb-2">
-            PAPS 왕복오래달리기 기록장
-          </h1>
-          <p class="text-slate-400 text-sm text-center mb-8">
-            측정 결과를 실시간으로 엑셀로 변환하고 등록된 이메일 주소로 즉시 전송합니다.
-          </p>
-
-          <div class="space-y-6">
-            <!-- 학생 수 선택 인원 조절 -->
-            <div class="bg-slate-950/90 border border-slate-800/80 rounded-2xl p-6">
-              <label class="block text-sm font-bold text-slate-400 mb-3 text-center uppercase tracking-wider">
-                측정 학생 수 선별
-              </label>
-              <div class="flex items-center justify-center gap-6">
-                <button
-                  id="btn-count-minus"
-                  class="w-12 h-12 bg-slate-900 hover:bg-slate-800 border border-slate-700/60 rounded-xl flex items-center justify-center hover:text-white transition-all transform hover:scale-105"
-                >
-                  <!-- Minus Icon (SVG) -->
-                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                  </svg>
-                </button>
-                <input
-                  type="number"
-                  id="input-student-count"
-                  min="1"
-                  max="40"
-                  value="20"
-                  class="text-5xl font-extrabold font-mono text-blue-400 w-28 text-center tracking-tighter bg-transparent border-b-2 border-slate-800 focus:border-blue-500 focus:outline-none"
-                />
-                <button
-                  id="btn-count-plus"
-                  class="w-12 h-12 bg-slate-900 hover:bg-slate-800 border border-slate-700/60 rounded-xl flex items-center justify-center hover:text-white transition-all transform hover:scale-105"
-                >
-                  <!-- Plus Icon (SVG) -->
-                  <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <line x1="12" y1="5" x2="12" y2="19"></line>
-                    <line x1="5" y1="12" x2="19" y2="12"></line>
-                  </svg>
-                </button>
-              </div>
-              <span class="text-center block text-xs text-slate-500 mt-2">최대 40명까지 편리하게 직접 수량을 입력하거나 가감할 수 있습니다.</span>
-            </div>
-
-            <!-- 학년 반 설정 기능 추가 -->
-            <div class="bg-slate-950/90 border border-slate-800/80 rounded-2xl p-6">
-              <label class="block text-sm font-bold text-slate-400 mb-3 text-center uppercase tracking-wider">
-                학년 / 반 설정
-              </label>
-              <div class="grid grid-cols-2 gap-4">
-                <div class="flex items-center bg-slate-900 border border-slate-700/50 rounded-xl px-4 py-2.5">
-                  <input
-                    type="number"
-                    id="input-grade"
-                    placeholder="학년 입력"
-                    class="w-full bg-transparent text-slate-100 placeholder-slate-650 text-center text-lg font-semibold focus:outline-none"
-                  />
-                  <span class="text-sm font-bold text-slate-400 ml-2 shrink-0">학년</span>
+                <div class="playback-controls">
+                    <button id="btn-pause" class="btn-playback playing">▶</button>
                 </div>
-                <div class="flex items-center bg-slate-900 border border-slate-700/50 rounded-xl px-4 py-2.5">
-                  <input
-                    type="number"
-                    id="input-class-group"
-                    placeholder="반 입력"
-                    class="w-full bg-transparent text-slate-100 placeholder-slate-650 text-center text-lg font-semibold focus:outline-none"
-                  />
-                  <span class="text-sm font-bold text-slate-400 ml-2 shrink-0">반</span>
-                </div>
-              </div>
-            </div>
 
-            <!-- 이메일 주소 입력 창 -->
-            <div class="bg-slate-950/90 border border-slate-800/80 rounded-2xl p-6">
-              <div class="flex items-center gap-2 mb-2 justify-center">
-                <!-- Mail Icon (SVG) -->
-                <svg class="w-4 h-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                  <polyline points="22,6 12,13 2,6"></polyline>
-                </svg>
-                <label class="block text-sm font-bold text-slate-300 uppercase tracking-wide">
-                  교사 이메일 주소 입력
-                </label>
-              </div>
-              <input
-                type="email"
-                id="input-teacher-email"
-                placeholder="example@gmail.com"
-                class="w-full bg-slate-900 text-slate-100 placeholder-slate-600 border border-slate-700/50 rounded-xl px-4 py-3.5 text-center text-lg font-medium focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
-              />
-              <p class="text-xs text-slate-500 mt-3 leading-relaxed text-center">
-                측정이 끝난 후 이 주소로 결과 리포트가 담긴 <strong class="text-slate-400 font-semibold">엑셀 파일(.xlsx)</strong>이 자동 전송됩니다.
-              </p>
+                <div id="main-counter">0</div>
+                <span id="time-display" class="timer-display">00:00</span>
+                <div id="progress-bar" class="progress-track" style="width:0%"></div>
             </div>
-
-            <!-- 측정 시작 버튼 -->
-            <button
-              id="btn-start-paps"
-              class="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-extrabold text-xl rounded-2xl cursor-pointer shadow-xl shadow-blue-900/30 hover:shadow-cyan-500/10 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
-            >
-              PAPS 기록 및 비프음 측정 시작
-            </button>
-          </div>
         </div>
 
-        <!-- 연동 및 연계 설명 세부 정보 -->
-        <div class="mt-8 bg-slate-900/50 border border-slate-800/40 rounded-2xl p-6">
-          <div class="flex items-center gap-2 mb-4 text-blue-400">
-            <!-- Settings Icon (SVG) -->
-            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="3"></circle>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-            </svg>
-            <h3 class="font-bold text-base">Vercel 배포 시 모르는 사람에게도 메일 전송 가능하게 연동하는 방법</h3>
-          </div>
-
-          <div class="flex border-b border-slate-800 mb-4 text-xs font-bold uppercase tracking-wider">
-            <button
-              id="tab-btn-gmail"
-              class="pb-2.5 px-4 text-cyan-400 border-b-2 border-cyan-400 font-extrabold transition-all"
-            >
-              방법 1: Gmail SMTP 사용 (강력 추천 - 누구나 수신 가능 🔥)
-            </button>
-            <button
-              id="tab-btn-resend"
-              class="pb-2.5 px-4 text-slate-500 transition-all font-bold"
-            >
-              방법 2: Resend API 사용 (도메인 소유자용 제한형 ⚠️)
-            </button>
-          </div>
-
-          <div id="tab-content-gmail" class="text-sm text-slate-300 space-y-3 leading-relaxed">
-            <p class="text-cyan-300 font-medium">
-              💡 이 방식은 복잡한 도메인 인증(DNS 등록) 없이도 <strong>전 세계 그 어떠한 임의의 상대방 메일 주소로든 100% 한계 없이</strong> 이메일을 직접 발송할 수 있어 가장 완벽합니다!
-            </p>
-            <ol class="list-decimal pl-5 space-y-1.5 text-xs text-slate-400">
-              <li>발송에 사용할 선생님의 개인 구글 이메일 환경에서 <strong class="text-slate-200">[구글 계정 관리 &gt; 보안]</strong>으로 이동합니다.</li>
-              <li>구글 계정의 <strong class="text-slate-200">2단계 인증</strong>을 활성화합니다.</li>
-              <li>2단계 인증 설정 완료 후, 검색창에 <strong class="text-slate-200">"앱 비밀번호"</strong>를 입력해 전용 16자리 앱 특수 토큰 암호를 발급받습니다.</li>
-              <li>Vercel 대시보드의 <strong class="text-slate-200">Settings &gt; Environment Variables</strong>에 아래 2개 환경변수 설정을 마칩니다:</li>
-              <ul class="list-disc pl-5 mt-1 space-y-1 text-[11px] font-mono text-cyan-400">
-                <li>SMTP_USER = "선생님지메일@gmail.com"</li>
-                <li>SMTP_PASS = "발급받은 16자리 앱비밀번호 (공백없이)"</li>
-              </ul>
-              <li>이제 측정을 끝내고 임의의 상대방 메일 주소를 적으면, 엑셀이 그 주소로 완벽하게 꽂히게 됩니다!</li>
-            </ol>
-          </div>
-
-          <div id="tab-content-resend" class="text-sm text-slate-300 space-y-3 leading-relaxed hidden">
-            <p class="text-amber-400 font-medium">
-              ⚠️ 안내: Resend 무료 티어의 경우, 자체 웹사이트 도메인을 인증(DNS TXT 등록 등)해두지 않으면 <strong>오직 가입한 본인의 회원 메일 주소로만 샌드박스 메일 전송이 한정</strong>되는 단점이 있습니다!
-            </p>
-            <ol class="list-decimal pl-5 space-y-1.5 text-xs text-slate-400">
-              <li>개인만의 독립된 도메인(.com, .kr 등)을 가지고 있는 분들만 사용을 권장합니다.</li>
-              <li><strong class="text-slate-200">resend.com</strong>에 가입하여 API Key를 발급받은 뒤, Vercel 환경변수에 <code class="bg-slate-950 px-1 py-0.5 rounded text-blue-300">RESEND_API_KEY</code> 명칭으로 입력합니다.</li>
-              <li>도메인 인증이 누락된 초기 샌드박스 상태에서는 타인에게 발송되지 않습니다. 타인 발송을 원하신다면 <strong>방법 1 (Gmail SMTP 방식)</strong>을 사용하는 것이 정석입니다!</li>
-            </ol>
-          </div>
-        </div>
-      </div>
-
-      <!-- ==================== 2. MEASUREMENT SCREEN ==================== -->
-      <div id="screen-measurement" class="space-y-6 hidden">
-        
-        <!-- 타이머 및 카운트 허브 -->
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl">
-          <div class="flex flex-col items-center md:items-start text-center md:text-left">
-            <span class="text-xs text-blue-400 font-extrabold tracking-widest uppercase mb-1">
-              CURRENT RUN TIME
-            </span>
-            <span id="text-timer" class="text-4xl font-mono font-bold tracking-tight text-white">
-              00:00
-            </span>
-            <span class="text-xs text-slate-500 mt-2 flex items-center gap-1">
-              <!-- Info Icon (SVG) -->
-              <svg class="w-3.5 h-3.5 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="16" x2="12" y2="12"></line>
-                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-              </svg>
-              Web Audio API 신호음 가동 중
-            </span>
-          </div>
-
-          <!-- 메인 대형 카운터 뱃지 -->
-          <div class="flex flex-col items-center">
-            <span class="text-xs text-cyan-400 font-extrabold tracking-widest uppercase mb-1">
-              CURRENT LAP
-            </span>
-            <div class="flex items-baseline gap-1" id="box-main-count">
-              <span id="text-main-count" class="text-8xl font-black font-mono tracking-tighter text-transparent bg-clip-text bg-gradient-to-tr from-cyan-400 to-blue-500">
-                0
-              </span>
-              <span class="text-xl font-bold text-slate-500">회</span>
-            </div>
-          </div>
-
-          <!-- 컨트롤 버튼 일렉트릭 킷 -->
-          <div class="flex items-center gap-3">
-            <button
-              id="btn-play-pause"
-              class="px-6 py-3.5 rounded-2xl font-bold flex items-center gap-2 text-white transition-all transform hover:scale-105 cursor-pointer bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-900/30"
-            >
-              <!-- Play Icon (SVG) -->
-              <svg id="icon-play" class="w-5 h-5 fill-current" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M8 5v14l11-7z"></path>
-              </svg>
-              <!-- Pause Icon (SVG, hidden by default) -->
-              <svg id="icon-pause" class="w-5 h-5 fill-current hidden" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"></path>
-              </svg>
-              <span id="btn-play-pause-text">측정 시작</span>
-            </button>
-
-            <button
-              id="btn-go-home"
-              class="p-3.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white rounded-2xl transition-all"
-              title="설정으로 돌아가기"
-            >
-              <!-- Home Icon (SVG) -->
-              <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                <polyline points="9 22 9 12 15 12 15 22"></polyline>
-              </svg>
-            </button>
-          </div>
+        <div class="grid-scroll">
+            <div id="student-grid" class="student-grid"></div>
         </div>
 
-        <!-- 개별 학생 기록 그리드 판넬 -->
-        <div class="space-y-3">
-          <div class="flex items-center justify-between px-2">
-            <h2 class="text-lg font-bold text-slate-300 flex flex-wrap items-center gap-2">
-              <svg class="w-4 h-4 text-cyan-400 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <polyline points="9 18 15 12 9 6"></polyline>
-              </svg>
-              학생 현황 보드
-              <span class="text-xs font-normal text-slate-500">
-                (카드를 클릭하면 그 순간 측정 횟수로 탈락 확정 처리됩니다.)
-              </span>
-            </h2>
-            <div class="flex gap-4 text-xs font-medium text-slate-400 shrink-0">
-              <span class="flex items-center gap-1">
-                <span class="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block"></span> 진행 <span id="text-count-active">0</span>명
-              </span>
-              <span class="flex items-center gap-1">
-                <span class="w-2.5 h-2.5 rounded-full bg-slate-700 inline-block"></span> 탈락 <span id="text-count-dropped">0</span>명
-              </span>
-            </div>
-          </div>
-
-          <div id="grid-students" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-3">
-            <!-- Dynamic student cards injected via JS -->
-          </div>
+        <div class="bottom-bar">
+            <button id="restart-btn" class="btn-secondary">처음으로</button>
+            <span class="help-text" style="font-size: 11px; color:#555a70;">※ 카드 클릭 → 탈락 처리 및 기록 확정</span>
+            <button id="export-btn" class="btn-export">기록 마감</button>
         </div>
+    </div>
 
-        <!-- 하단 최종 조치 액션 툴바 -->
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl p-4 flex items-center justify-between gap-4">
-          <span class="text-xs text-slate-500 hidden md:inline-block">
-            선생님, 측정이 완전히 종료되면 <strong class="text-slate-400 font-semibold">측정 마감</strong> 버튼을 클릭해주세요.
-          </span>
-          <button
-            id="btn-measurement-end"
-            class="w-full md:w-auto px-10 py-3.5 bg-gradient-to-r from-rose-600 to-orange-500 hover:from-rose-500 hover:to-orange-400 text-white font-extrabold text-base rounded-xl cursor-pointer shadow-lg shadow-rose-950/20 hover:shadow-orange-500/10 transition-all text-center ml-auto"
-          >
-            측정 마감 ( 결과 확인 )
-          </button>
-        </div>
-      </div>
-
-      <!-- ==================== 3. RESULT SCREEN ==================== -->
-      <div id="screen-result" class="max-w-3xl mx-auto space-y-6 hidden">
-        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl">
-          <h2 class="text-2xl font-black text-center text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-cyan-400 tracking-tight mb-2">
-            최종 기록 분석 결과
-          </h2>
-          <p class="text-slate-400 text-xs text-center mb-6">
-            셔틀런 왕복오래달리기가 완료되었습니다. 아래 리스트를 확인하고 즉시 저장 및 이메일 전송을 진행하세요.
-          </p>
-
-          <!-- 이메일 발송 패널 -->
-          <div class="bg-slate-950 border border-slate-800/80 rounded-2xl p-6 mb-8">
-            <span class="text-xs text-cyan-400 font-extrabold tracking-widest uppercase block mb-3 text-center">
-              Excel 파일 자동 보고서 메일링 엔진
-            </span>
-
-            <div class="flex flex-col sm:flex-row items-center gap-3">
-              <div class="relative w-full flex-1">
-                <!-- Mail Icon (SVG) -->
-                <svg class="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                  <polyline points="22,6 12,13 2,6"></polyline>
-                </svg>
-                <input
-                  type="email"
-                  id="input-result-email"
-                  placeholder="교사 이메일을 입력하세요"
-                  class="w-full bg-slate-900 text-slate-200 placeholder-slate-600 border border-slate-700/60 rounded-xl pl-12 pr-4 py-3 text-base focus:outline-none focus:border-blue-500 transition-colors"
-                />
-              </div>
-
-              <button
-                id="btn-send-email-api"
-                class="w-full sm:w-auto px-6 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 disabled:opacity-50 text-white font-extrabold text-base rounded-xl flex items-center justify-center gap-2 cursor-pointer shadow-lg transition-all"
-              >
-                <!-- File Spreadsheet Icon (SVG) -->
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                  <polyline points="14 2 14 8 20 8"></polyline>
-                  <line x1="16" y1="13" x2="8" y2="13"></line>
-                  <line x1="16" y1="17" x2="8" y2="17"></line>
-                  <polyline points="10 9 9 9 8 9"></polyline>
-                </svg>
-                <span id="text-send-email-btn">엑셀 메일 전송</span>
-              </button>
-            </div>
-
-            <!-- 메일 상태 알람창 인터페이스 -->
-            <div id="box-send-status" class="mt-4 p-4 rounded-xl border text-sm leading-relaxed hidden">
-              <!-- Content injected dynamically -->
-            </div>
-          </div>
-
-          <!-- 최종 분석 액션 그룹 -->
-          <div class="space-y-4">
-            <div class="flex flex-col sm:flex-row gap-3">
-              <button
-                id="btn-download-excel"
-                class="flex-1 py-4 bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-slate-600 text-slate-200 hover:text-white font-bold text-base rounded-2xl flex items-center justify-center gap-2 cursor-pointer shadow-md transition-all active:scale-95"
-              >
-                <!-- Download Icon (SVG) -->
-                <svg class="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                  <polyline points="7 10 12 15 17 10"></polyline>
-                  <line x1="12" y1="15" x2="12" y2="3"></line>
-                </svg>
-                <span>내 기기에 엑셀파일 직접다운로드</span>
-              </button>
-
-              <button
-                id="btn-restart"
-                class="flex-1 py-4 bg-slate-950 hover:bg-slate-900 border border-slate-800 text-slate-400 hover:text-white font-bold text-base rounded-2xl flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-95"
-              >
-                <!-- RefreshCw Icon (SVG) -->
-                <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <polyline points="23 4 23 10 17 10"></polyline>
-                  <polyline points="1 20 1 14 7 14"></polyline>
-                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                </svg>
-                <span>새로운 측정 시작하기 (초기화)</span>
-              </button>
-            </div>
-          </div>
-
-          <!-- 세부 학급 성적 데이터 테이블 목록 -->
-          <div class="mt-8 border-t border-slate-800/80 pt-6">
-            <h3 class="text-lg font-bold text-slate-300 mb-4 flex items-center gap-2">
-              <span class="w-1.5 h-4 bg-cyan-400 rounded-sm inline-block"></span>
-              학년/반별 개별 상세 리포트
-            </h3>
+    <!-- 결과 모달 및 실시간 메일 전송 패널 -->
+    <div id="result-modal">
+        <div class="modal-box">
+            <div class="modal-title">FINAL RESULT</div>
             
-            <div class="overflow-hidden border border-slate-800 rounded-2xl">
-              <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse text-sm">
-                  <thead>
-                    <tr class="bg-slate-950 text-slate-400 border-b border-slate-800 font-bold">
-                      <th class="p-3 text-center">학년</th>
-                      <th class="p-3 text-center">반</th>
-                      <th class="p-3 text-center">학생 번호</th>
-                      <th class="p-3 text-center">셔틀런 기록 (회)</th>
-                      <th class="p-3 text-center">PAPS 등급</th>
-                    </tr>
-                  </thead>
-                  <tbody id="table-result-body">
-                    <!-- Dynamic rows injected via JS -->
-                  </tbody>
+            <div class="result-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width:50%">번호</th>
+                            <th style="width:50%">기록 (회)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="result-table-body"></tbody>
                 </table>
-              </div>
             </div>
-          </div>
+
+            <!-- 메일 발송 전진기 기지 -->
+            <div class="email-send-area">
+                <label for="modal-email">수신받을 이메일 주소</label>
+                <input type="email" id="modal-email" class="input-email" style="margin-bottom:10px; padding:10px; font-size:14px;" placeholder="example@naver.com">
+                <button id="btn-trigger-email" class="btn-email-submit">📧 엑셀 리포트 이메일로 전송</button>
+                <div id="email-status-msg" class="email-status-text"></div>
+            </div>
+
+            <button id="close-modal-btn" class="btn-close-modal">완료 및 홈으로</button>
         </div>
-      </div>
-    </main>
+    </div>
 
-    <!-- ==================== LOGISTICS AND EVENT HANDLERS SCRIPT ==================== -->
     <script>
-      // 셔틀런 공식 타이밍 설정 (공식 비프테스트 표 기반 - 29초 오프셋 적용)
-      const OFFSET = 29; // 음원 오디오 앞부분 멘트 설명시간 및 준비시간
-      const STAGES = [
-        { start: 0 + OFFSET, laps: 7, lapTime: 9.00 },
-        { start: 63 + OFFSET, laps: 8, lapTime: 8.00 },
-        { start: 127 + OFFSET, laps: 8, lapTime: 7.58 },
-        { start: 187.6 + OFFSET, laps: 9, lapTime: 7.20 },
-        { start: 252.4 + OFFSET, laps: 9, lapTime: 6.86 },
-        { start: 314.1 + OFFSET, laps: 10, lapTime: 6.55 },
-        { start: 379.6 + OFFSET, laps: 10, lapTime: 6.26 },
-        { start: 442.2 + OFFSET, laps: 11, lapTime: 6.00 },
-        { start: 508.2 + OFFSET, laps: 11, lapTime: 5.76 },
-        { start: 571.6 + OFFSET, laps: 11, lapTime: 5.54 },
-        { start: 632.5 + OFFSET, laps: 12, lapTime: 5.33 },
-        { start: 696.5 + OFFSET, laps: 12, lapTime: 5.14 },
-        { start: 758.2 + OFFSET, laps: 13, lapTime: 4.97 },
-        { start: 822.8 + OFFSET, laps: 13, lapTime: 4.80 },
-        { start: 885.2 + OFFSET, laps: 13, lapTime: 4.65 },
-      ];
+        /* ===== STATE ===== */
+        let audioContext;
+        let isPlaying = false;
+        let currentTime = 0;
+        let currentCount = 0;
+        let timerInterval;
+        let studentsData = [];
 
-      const SHUTTLE_TIMINGS = (() => {
-        const beeps = [];
-        STAGES.forEach(s => {
-          let t = s.start;
-          for (let i = 0; i < s.laps; i++) {
-            beeps.push(t);
-            t += s.lapTime;
-          }
+        // 이메일 주소 브라우저 영구보존
+        const emailInput = document.getElementById('teacher-email');
+        const modalEmailInput = document.getElementById('modal-email');
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedEmail = localStorage.getItem('paps_saved_email') || '';
+            emailInput.value = savedEmail;
+            modalEmailInput.value = savedEmail;
         });
-        return beeps;
-      })();
 
-      // PAPS 셔틀런 간이 등급 판정 (만 11세 초등 고학년 기준)
-      function getPapsGrade(count) {
-        if (count >= 50) return "1등급 (우수)";
-        if (count >= 35) return "2등급 (양호)";
-        if (count >= 21) return "3등급 (보통)";
-        if (count >= 10) return "4등급 (노력요함)";
-        return "5등급 (기초체력부족)";
-      }
+        emailInput.addEventListener('input', () => {
+            localStorage.setItem('paps_saved_email', emailInput.value);
+            modalEmailInput.value = emailInput.value;
+        });
+        modalEmailInput.addEventListener('input', () => {
+            localStorage.setItem('paps_saved_email', modalEmailInput.value);
+            emailInput.value = modalEmailInput.value;
+        });
 
-      // 상태 관리 객체 (State Definition)
-      const state = {
-        screen: "setup", // "setup" | "measurement" | "result"
-        studentCount: 20,
-        teacherEmail: localStorage.getItem("paps_teacher_email") || "",
-        grade: localStorage.getItem("paps_grade") || "",
-        classGroup: localStorage.getItem("paps_class_group") || "",
-        students: [],
-        isPlaying: false,
-        currentTime: 0,
-        currentCount: 0,
-        isSending: false,
-        activeTab: "gmail" // "gmail" | "resend"
-      };
+        /* ===== SHUTTLE TIMINGS (29초 오프셋 적용 공식 비프테스트 타임라인) ===== */
+        const OFFSET = 29;
+        const shuttleTimings = (() => {
+            const stages = [
+                { start: 0     + OFFSET, laps: 7,  lapTime: 9.00 },
+                { start: 63    + OFFSET, laps: 8,  lapTime: 8.00 },
+                { start: 127   + OFFSET, laps: 8,  lapTime: 7.58 },
+                { start: 187.6 + OFFSET, laps: 9,  lapTime: 7.20 },
+                { start: 252.4 + OFFSET, laps: 9,  lapTime: 6.86 },
+                { start: 314.1 + OFFSET, laps: 10, lapTime: 6.55 },
+                { start: 379.6 + OFFSET, laps: 10, lapTime: 6.26 },
+                { start: 442.2 + OFFSET, laps: 11, lapTime: 6.00 },
+                { start: 508.2 + OFFSET, laps: 11, lapTime: 5.76 },
+                { start: 571.6 + OFFSET, laps: 11, lapTime: 5.54 },
+            ];
+            const beeps = [];
+            stages.forEach(s => {
+                let t = s.start;
+                for (let i = 0; i < s.laps; i++) { beeps.push(t); t += s.lapTime; }
+            });
+            return beeps;
+        })();
 
-      // Web Audio API 오디오 컨텍스트
-      let audioCtx = null;
-      let tickInterval = null;
-      let lastTickStamp = 0;
-
-      // DOM 요소 탐색
-      // Screens
-      const elSetup = document.getElementById("screen-setup");
-      const elMeasurement = document.getElementById("screen-measurement");
-      const elResult = document.getElementById("screen-result");
-
-      // Inputs
-      const elStudentCount = document.getElementById("input-student-count");
-      const elGrade = document.getElementById("input-grade");
-      const elClassGroup = document.getElementById("input-class-group");
-      const elTeacherEmail = document.getElementById("input-teacher-email");
-      const elResultEmail = document.getElementById("input-result-email");
-
-      // Buttons
-      const btnMinus = document.getElementById("btn-count-minus");
-      const btnPlus = document.getElementById("btn-count-plus");
-      const btnStart = document.getElementById("btn-start-paps");
-      const btnPlayPause = document.getElementById("btn-play-pause");
-      const btnGoHome = document.getElementById("btn-go-home");
-      const btnMeasurementEnd = document.getElementById("btn-measurement-end");
-      const btnSendEmail = document.getElementById("btn-send-email-api");
-      const btnDownloadExcel = document.getElementById("btn-download-excel");
-      const btnRestart = document.getElementById("btn-restart");
-
-      // Tabs
-      const tabGmail = document.getElementById("tab-btn-gmail");
-      const tabResend = document.getElementById("tab-btn-resend");
-      const tabContentGmail = document.getElementById("tab-content-gmail");
-      const tabContentResend = document.getElementById("tab-content-resend");
-
-      // Live Stats & Display
-      const elTimer = document.getElementById("text-timer");
-      const elMainCount = document.getElementById("text-main-count");
-      const elActiveCount = document.getElementById("text-count-active");
-      const elDroppedCount = document.getElementById("text-count-dropped");
-      const elGridStudents = document.getElementById("grid-students");
-      const elTableResultBody = document.getElementById("table-result-body");
-      const elSendStatus = document.getElementById("box-send-status");
-
-      // 초기 인풋 값 할당
-      elStudentCount.value = state.studentCount;
-      elGrade.value = state.grade;
-      elClassGroup.value = state.classGroup;
-      elTeacherEmail.value = state.teacherEmail;
-      elResultEmail.value = state.teacherEmail;
-
-      // 동기화 관련 함수
-      function updateLocalStorage() {
-        localStorage.setItem("paps_teacher_email", state.teacherEmail);
-        localStorage.setItem("paps_grade", state.grade);
-        localStorage.setItem("paps_class_group", state.classGroup);
-      }
-
-      // 오디오 사운드 합성기 가동 (Web Audio API)
-      function playBeepSound() {
-        try {
-          if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          }
-          if (audioCtx.state === "suspended") {
-            audioCtx.resume();
-          }
-          const osc = audioCtx.createOscillator();
-          const gainNode = audioCtx.createGain();
-          
-          osc.type = "sine";
-          osc.frequency.setValueAtTime(1200, audioCtx.currentTime); // 맑고 높은 소리
-          gainNode.gain.setValueAtTime(0.3, audioCtx.currentTime);
-          gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
-
-          osc.connect(gainNode);
-          gainNode.connect(audioCtx.destination);
-          
-          osc.start(audioCtx.currentTime);
-          osc.stop(audioCtx.currentTime + 0.4);
-        } catch (e) {
-          console.warn("신호 오디오 출력 오류:", e);
-        }
-      }
-
-      // 시간 포맷 (mm:ss)
-      function formatTime(seconds) {
-        const m = Math.floor(seconds / 60);
-        const s = Math.floor(seconds % 60);
-        return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-      }
-
-      // 학생 카드가 갱신되는 렌더러 함수
-      function renderStudentGrid() {
-        elGridStudents.innerHTML = "";
-        
-        state.students.forEach(s => {
-          const card = document.createElement("div");
-          card.className = `relative rounded-2xl p-4 flex flex-col items-center justify-center min-h-[110px] transition-all border select-none ${
-            s.dropped
-              ? "bg-slate-950 border-slate-900 text-slate-600"
-              : "bg-slate-900/80 hover:bg-slate-900 border-slate-800 text-slate-100 hover:border-blue-500 hover:shadow-lg hover:shadow-blue-500/5 cursor-pointer transform hover:-translate-y-0.5 active:translate-y-0 active:scale-95"
-          }`;
-
-          // 번호 영역
-          const spanId = document.createElement("span");
-          spanId.className = `text-base font-extrabold ${s.dropped ? "text-slate-600" : "text-blue-300"}`;
-          spanId.innerText = `${s.id}번`;
-          card.appendChild(spanId);
-
-          // 기록 영역
-          const spanCount = document.createElement("span");
-          spanCount.className = "text-3xl font-mono font-black mt-2";
-          spanCount.innerText = s.dropped ? `${s.count}회` : "진행중";
-          card.appendChild(spanCount);
-
-          // 클릭하면 탈락 처리
-          card.onclick = () => {
-            if (!s.dropped) {
-              s.dropped = true;
-              s.count = state.currentCount;
-              renderStudentGrid();
-              updateCounterStats();
-            }
-          };
-
-          // 더블클릭 또는 설정 버튼용 툴 박스 (탈락된 경우만 노출)
-          if (s.dropped) {
-            const toolBox = document.createElement("div");
-            toolBox.className = "absolute top-2 right-2 flex items-center gap-1";
-
-            // 기록 수정 버튼
-            const btnEdit = document.createElement("button");
-            btnEdit.className = "p-1 rounded bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-cyan-400 transition-colors";
-            btnEdit.title = "기록 수동 수정";
-            btnEdit.innerHTML = `
-              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="3"></circle>
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-              </svg>
-            `;
-            btnEdit.onclick = (e) => {
-              e.stopPropagation();
-              const scoreText = prompt(`${s.id}번 학생의 왕복오래달리기 셔틀런 기록을 직접 입력하세요:`, String(s.count));
-              if (scoreText !== null) {
-                const parsed = parseInt(scoreText);
-                if (!isNaN(parsed) && parsed >= 0) {
-                  s.count = parsed;
-                  renderStudentGrid();
-                  updateCounterStats();
+        // 비프음 가동기 (Web Audio API 기술을 사용하여 내장 음원이 없어도 영롱한 도달 벨소리를 자체 생성합니다.)
+        function playSynthesizedBeep() {
+            try {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 }
-              }
-            };
-            toolBox.appendChild(btnEdit);
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1000, audioContext.currentTime); // 1000Hz 맑고 청아한 신호음
+                gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.35);
 
-            // 기사회생 / 리셋 버튼
-            const btnRevive = document.createElement("button");
-            btnRevive.className = "p-1 rounded bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-400 hover:text-rose-400 transition-colors";
-            btnRevive.title = "기록 리셋 (심기일전 부활)";
-            btnRevive.innerHTML = `
-              <svg class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <polyline points="23 4 23 10 17 10"></polyline>
-                <polyline points="1 20 1 14 7 14"></polyline>
-                <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-              </svg>
-            `;
-            btnRevive.onclick = (e) => {
-              e.stopPropagation();
-              s.dropped = false;
-              s.count = null;
-              renderStudentGrid();
-              updateCounterStats();
-            };
-            toolBox.appendChild(btnRevive);
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                osc.start();
+                osc.stop(audioContext.currentTime + 0.4);
+            } catch (err) {
+                console.warn('사운드 신호 발생 에러:', err);
+            }
+        }
 
-            card.appendChild(toolBox);
-          }
-
-          elGridStudents.appendChild(card);
+        /* ===== SETUP SCREEN CONTROLS ===== */
+        const countInput = document.getElementById('student-count');
+        document.getElementById('btn-minus').addEventListener('click', () => {
+            const v = parseInt(countInput.value) || 1;
+            if (v > 1) countInput.value = v - 1;
         });
-      }
-
-      function updateCounterStats() {
-        const activeCount = state.students.filter(x => !x.dropped).length;
-        const droppedCount = state.students.filter(x => x.dropped).length;
-        elActiveCount.innerText = activeCount;
-        elDroppedCount.innerText = droppedCount;
-      }
-
-      // 화면 전환 모듈
-      function switchScreen(screenName) {
-        state.screen = screenName;
-        if (screenName === "setup") {
-          elSetup.classList.remove("hidden");
-          elMeasurement.classList.add("hidden");
-          elResult.classList.add("hidden");
-        } else if (screenName === "measurement") {
-          elSetup.classList.add("hidden");
-          elMeasurement.classList.remove("hidden");
-          elResult.classList.add("hidden");
-        } else if (screenName === "result") {
-          elSetup.classList.add("hidden");
-          elMeasurement.classList.add("hidden");
-          elResult.classList.remove("hidden");
-        }
-      }
-
-      // 수동 조절 이벤트 바인딩 (측정 학생 수 선별)
-      btnMinus.onclick = () => {
-        let val = parseInt(elStudentCount.value) || 20;
-        val = Math.max(1, val - 1);
-        elStudentCount.value = val;
-        state.studentCount = val;
-      };
-
-      btnPlus.onclick = () => {
-        let val = parseInt(elStudentCount.value) || 20;
-        val = Math.min(40, val + 1);
-        elStudentCount.value = val;
-        state.studentCount = val;
-      };
-
-      elStudentCount.oninput = (e) => {
-        let val = parseInt(e.target.value);
-        if (!isNaN(val)) {
-          state.studentCount = Math.min(40, Math.max(1, val));
-        } else {
-          state.studentCount = 1;
-        }
-      };
-
-      elStudentCount.onblur = () => {
-        let val = parseInt(elStudentCount.value);
-        if (isNaN(val) || val < 1) {
-          elStudentCount.value = 20;
-          state.studentCount = 20;
-        } else {
-          elStudentCount.value = Math.min(40, val);
-          state.studentCount = Math.min(40, val);
-        }
-      };
-
-      // 학년, 반, 이메일 인풋 바인딩
-      elGrade.oninput = (e) => { state.grade = e.target.value; updateLocalStorage(); };
-      elClassGroup.oninput = (e) => { state.classGroup = e.target.value; updateLocalStorage(); };
-      elTeacherEmail.oninput = (e) => { 
-        state.teacherEmail = e.target.value; 
-        elResultEmail.value = e.target.value;
-        updateLocalStorage(); 
-      };
-      elResultEmail.oninput = (e) => { 
-        state.teacherEmail = e.target.value; 
-        elTeacherEmail.value = e.target.value;
-        updateLocalStorage(); 
-      };
-
-      // 시작 클릭
-      btnStart.onclick = () => {
-        // 학생 리스트 수립
-        state.students = Array.from({ length: state.studentCount }, (_, i) => ({
-          id: i + 1,
-          count: null,
-          dropped: false
-        }));
-
-        state.currentTime = 0;
-        state.currentCount = 0;
-        state.isPlaying = false;
-
-        elTimer.innerText = "00:00";
-        elMainCount.innerText = "0";
-
-        renderStudentGrid();
-        updateCounterStats();
-        switchScreen("measurement");
-
-        // 바로 오토플레이 가동
-        toggleTimer(true);
-      };
-
-      // 타이머 엔진 가동 토글함수
-      function toggleTimer(forcePlay = null) {
-        const targetState = forcePlay !== null ? forcePlay : !state.isPlaying;
-        state.isPlaying = targetState;
-
-        const iconPlay = document.getElementById("icon-play");
-        const iconPause = document.getElementById("icon-pause");
-        const btnText = document.getElementById("btn-play-pause-text");
-
-        if (state.isPlaying) {
-          // 일시정지화면 세팅
-          iconPlay.classList.add("hidden");
-          iconPause.classList.remove("hidden");
-          btnText.innerText = "일시 정지";
-          btnPlayPause.className = "px-6 py-3.5 rounded-2xl font-bold flex items-center gap-2 text-white transition-all transform hover:scale-105 cursor-pointer bg-amber-600 hover:bg-amber-500 shadow-lg shadow-amber-900/30";
-
-          // 브라우저 오디오 컨텍스트 락 풀기
-          if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          }
-
-          lastTickStamp = Date.now();
-          tickInterval = setInterval(() => {
-            const now = Date.now();
-            const delta = (now - lastTickStamp) / 1000;
-            lastTickStamp = now;
-
-            state.currentTime += delta;
-            elTimer.innerText = formatTime(state.currentTime);
-
-            // 매칭되는 랩(왕복 횟수) 계산
-            let calculatedCount = 0;
-            for (let i = 0; i < SHUTTLE_TIMINGS.length; i++) {
-              if (state.currentTime >= SHUTTLE_TIMINGS[i]) {
-                calculatedCount = i + 1;
-              } else {
-                break;
-              }
-            }
-
-            if (calculatedCount > state.currentCount) {
-              state.currentCount = calculatedCount;
-              elMainCount.innerText = state.currentCount;
-              playBeepSound();
-            }
-          }, 50);
-
-        } else {
-          // 정지상태
-          iconPlay.classList.remove("hidden");
-          iconPause.classList.add("hidden");
-          btnText.innerText = "재생 재개";
-          btnPlayPause.className = "px-6 py-3.5 rounded-2xl font-bold flex items-center gap-2 text-white transition-all transform hover:scale-105 cursor-pointer bg-emerald-600 hover:bg-emerald-500 shadow-lg shadow-emerald-900/30";
-
-          if (tickInterval) {
-            clearInterval(tickInterval);
-            tickInterval = null;
-          }
-        }
-      }
-
-      btnPlayPause.onclick = () => {
-        toggleTimer();
-      };
-
-      // 측정 중단하고 홈으로 복귀
-      btnGoHome.onclick = () => {
-        if (confirm("측정을 초기화하고 첫 설정 화면으로 갈까요? 기록 중인 데이터가 삭제될 수 있습니다.")) {
-          toggleTimer(false);
-          switchScreen("setup");
-        }
-      };
-
-      // 측정 종료 마감 처리
-      btnMeasurementEnd.onclick = () => {
-        toggleTimer(false);
-        
-        // 아직 진행중인 학생 일괄 최종기록화
-        state.students.forEach(s => {
-          if (!s.dropped) {
-            s.dropped = true;
-            s.count = state.currentCount;
-          }
+        document.getElementById('btn-plus').addEventListener('click', () => {
+            const v = parseInt(countInput.value) || 1;
+            if (v < 40) countInput.value = v + 1;
         });
 
-        // 결과 화면 테이블 렌더링
-        renderResultTable();
-        // 리포트 UI 준비
-        elSendStatus.className = "mt-4 p-4 rounded-xl border text-sm leading-relaxed hidden";
-        elSendStatus.innerHTML = "";
-        switchScreen("result");
-      };
-
-      // 결과 분석 테이블 바인딩
-      function renderResultTable() {
-        elTableResultBody.innerHTML = "";
-        
-        // ID 순 기재
-        const sorted = [...state.students].sort((a,b) => a.id - b.id);
-        sorted.forEach(s => {
-          const tr = document.createElement("tr");
-          tr.className = "border-b border-slate-800/60 hover:bg-slate-900/40 text-center";
-          
-          tr.innerHTML = `
-            <td class="p-3 font-semibold text-slate-300">${state.grade ? state.grade + '학년' : '-'}</td>
-            <td class="p-3 font-semibold text-slate-300">${state.classGroup ? state.classGroup + '반' : '-'}</td>
-            <td class="p-3 font-bold text-blue-400">${s.id}번</td>
-            <td class="p-3 font-mono font-extrabold text-white text-base">${s.count === null ? 0 : s.count}회</td>
-            <td class="p-3 text-xs font-semibold"><span class="px-2.5 py-1 rounded-full bg-slate-950 text-slate-300 border border-slate-800">${getPapsGrade(s.count || 0)}</span></td>
-          `;
-          elTableResultBody.appendChild(tr);
-        });
-      }
-
-      // 엑셀파일 생성 유틸리티
-      function generateXlsxWorkbook() {
-        const sorted = [...state.students].sort((a,b) => a.id - b.id);
-        const data = sorted.map(s => ({
-          "학년": state.grade ? `${state.grade}학년` : "-",
-          "반": state.classGroup ? `${state.classGroup}반` : "-",
-          "학생 번호": `${s.id}번`,
-          "측정 기록 (회)": s.count === null ? 0 : s.count,
-          "PAPS 기준 등급": getPapsGrade(s.count || 0),
-          "측정 일시": new Date().toLocaleString("ko-KR")
-        }));
-
-        const worksheet = XLSX.utils.json_to_sheet(data);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "PAPS 셔틀런 기록");
-        return workbook;
-      }
-
-      // 기기 직접 다운로드
-      btnDownloadExcel.onclick = () => {
-        const wb = generateXlsxWorkbook();
-        const displayFilename = `PAPS_셔틀런_${state.grade ? state.grade + "학년_" : ""}${state.classGroup ? state.classGroup + "반_" : ""}${new Date().toISOString().slice(0, 10)}.xlsx`;
-        XLSX.writeFile(wb, displayFilename);
-      };
-
-      // API 서버 이메일 전송 요청 바인딩
-      btnSendEmail.onclick = async () => {
-        if (!state.teacherEmail) {
-          alert("이메일 주소를 입력해주세요.");
-          return;
-        }
-
-        const btnText = document.getElementById("text-send-email-btn");
-        state.isSending = true;
-        btnSendEmail.disabled = true;
-        btnText.innerText = "메일 전송 중...";
-
-        elSendStatus.className = "mt-4 p-4 rounded-xl border text-sm leading-relaxed bg-slate-900 border-slate-800 text-slate-400";
-        elSendStatus.innerText = "엑셀 리포트 파일을 바이너리로 로컬 빌드하여 백엔드 서버로 즉시 전송 요청하는 중...";
-
-        try {
-          const wb = generateXlsxWorkbook();
-          const xlsxBase64 = XLSX.write(wb, { bookType: "xlsx", type: "base64" });
-
-          const emailSubject = `[바다쌤 체육교실] PAPS 왕복오래달리기 측정 결과 리포트${state.grade || state.classGroup ? ` (${state.grade ? state.grade + "학년 " : ""}${state.classGroup ? state.classGroup + "반" : ""})` : ""}`;
-          const emailFilename = `PAPS_ShuttleRun_${state.grade ? state.grade + "Grade_" : ""}${state.classGroup ? state.classGroup + "Class_" : ""}${new Date().toISOString().slice(0, 10)}.xlsx`;
-
-          // API 경로 전송
-          const response = await fetch("/api/send-email", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              email: state.teacherEmail,
-              xlsxBase64: xlsxBase64,
-              filename: emailFilename,
-              title: emailSubject,
-              studentCount: state.students.length
-            })
-          });
-
-          const responseText = await response.text();
-          let result;
-          try {
-            result = JSON.parse(responseText);
-          } catch (err) {
-            throw new Error(
-              `서버에서 올바른 JSON 규격이 아닌 상태 코드가 반환되었습니다 (인스턴스 동기화 지연 가능성).\n\n` +
-              `[알림] SMTP 전송 환경변수가 Vercel 인스턴스에 적용되려면 반드시 Vercel 대시보드에서 'Redeploy'를 통해 재가동을 해주셔야 정상 연동됩니다.`
-            );
-          }
-
-          if (response.ok && result.success) {
-            if (result.preview) {
-              elSendStatus.className = "mt-4 p-4 rounded-xl border text-sm leading-relaxed bg-cyan-950/40 border-cyan-800/50 text-cyan-300";
-              elSendStatus.innerText = result.message || "보드를 전송 테스트 상태(Preview)로 메일 송신이 중계되었습니다.";
-            } else {
-              elSendStatus.className = "mt-4 p-4 rounded-xl border text-sm leading-relaxed bg-emerald-950/40 border-emerald-800/50 text-emerald-300";
-              elSendStatus.innerText = result.message || "입력하신 교사 이메일 주소로 연동된 엑셀 보고서가 완벽하고 성공적으로 배달 완료되었습니다!";
+        document.getElementById('start-btn').addEventListener('click', () => {
+            const emailValue = emailInput.value.trim();
+            if(!emailValue || !emailValue.includes('@')) {
+                alert('교사 이메일 주소를 올바르게 입력해주세요.');
+                return;
             }
-          } else {
-            throw new Error(result.error || result.detail || "API 서버 응답 실패");
-          }
 
-        } catch (e) {
-          console.error(e);
-          elSendStatus.className = "mt-4 p-4 rounded-xl border text-sm leading-relaxed bg-rose-950/40 border-rose-800/50 text-rose-300";
-          elSendStatus.innerText = `이메일 전송 실패: ${e.message || "네트워크 통신 중 오류가 발생했습니다."}`;
-        } finally {
-          state.isSending = false;
-          btnSendEmail.disabled = false;
-          btnText.innerText = "엑셀 메일 전송";
+            const num = parseInt(countInput.value);
+            studentsData = Array.from({ length: num }, (_, i) => ({ id: i + 1, count: null, dropped: false }));
+
+            document.getElementById('setup-screen').style.display = 'none';
+            document.getElementById('main-screen').classList.add('visible');
+            renderGrid();
+
+            isPlaying = true;
+            startMeasurementTimer();
+            updatePauseButton();
+        });
+
+        /* ===== TIMER & SYNC LOOP ===== */
+        function startMeasurementTimer() {
+            let lastTick = Date.now();
+            timerInterval = setInterval(() => {
+                const now = Date.now();
+                const delta = (now - lastTick) / 1000;
+                lastTick = now;
+
+                if (isPlaying) {
+                    currentTime += delta;
+
+                    // mm:ss 포맷 출력
+                    const m = String(Math.floor(currentTime / 60)).padStart(2, '0');
+                    const s = String(Math.floor(currentTime % 60)).padStart(2, '0');
+                    document.getElementById('time-display').textContent = `${m}:${s}`;
+
+                    // 현재 시간 기반 랩(합산 회수) 연산
+                    let calc = 0;
+                    for (let i = 0; i < shuttleTimings.length; i++) {
+                        if (currentTime >= shuttleTimings[i]) calc = i + 1; else break;
+                    }
+
+                    if (calc !== currentCount) {
+                        currentCount = calc;
+                        playSynthesizedBeep();
+                        updateCounterDisplay();
+                    }
+                }
+            }, 50);
         }
-      };
 
-      // 처음부터 다시하기 리셋 바인커
-      btnRestart.onclick = () => {
-        if (confirm("측정했던 분석 리포트를 종료하고 메인 설정으로 갈까요?")) {
-          switchScreen("setup");
+        function updateCounterDisplay() {
+            const el = document.getElementById('main-counter');
+            el.textContent = currentCount;
+            el.classList.remove('pop');
+            void el.offsetWidth;
+            el.classList.add('pop');
         }
-      };
 
-      // 도움말 설명 탭 기능 구현 (Vanilla JS)
-      tabGmail.onclick = () => {
-        state.activeTab = "gmail";
-        tabGmail.className = "pb-2.5 px-4 text-cyan-400 border-b-2 border-cyan-400 font-extrabold transition-all";
-        tabResend.className = "pb-2.5 px-4 text-slate-500 transition-all font-bold";
-        tabContentGmail.classList.remove("hidden");
-        tabContentResend.classList.add("hidden");
-      };
+        function updatePauseButton() {
+            const btn = document.getElementById('btn-pause');
+            btn.textContent = isPlaying ? '⏸' : '▶';
+        }
 
-      tabResend.onclick = () => {
-        state.activeTab = "resend";
-        tabResend.className = "pb-2.5 px-4 text-blue-400 border-b-2 border-blue-400 font-extrabold transition-all";
-        tabGmail.className = "pb-2.5 px-4 text-slate-500 transition-all font-bold";
-        tabContentResend.classList.remove("hidden");
-        tabContentGmail.classList.add("hidden");
-      };
+        document.getElementById('btn-pause').addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            updatePauseButton();
+        });
 
+        /* ===== STUDENT GRID ===== */
+        function renderGrid() {
+            const grid = document.getElementById('student-grid');
+            grid.innerHTML = '';
+            studentsData.forEach(s => {
+                const card = document.createElement('div');
+                card.className = 's-card';
+                card.dataset.id = s.id;
+                card.innerHTML = `
+                    <span class="s-num">${s.id}번</span>
+                    <span class="s-score">0</span>
+                `;
+
+                card.addEventListener('click', () => {
+                    if (!s.dropped) {
+                        s.dropped = true;
+                        s.count = currentCount;
+                        card.classList.add('dropped');
+                        card.querySelector('.s-score').textContent = `${s.count}회`;
+                    }
+                });
+                grid.appendChild(card);
+            });
+        }
+
+        /* ===== RECORD EXPORT & MODAL ===== */
+        document.getElementById('restart-btn').addEventListener('click', () => {
+            if (confirm('모든 데이터를 초기화하고 처음 단계로 돌아갈까요?')) location.reload();
+        });
+
+        document.getElementById('export-btn').addEventListener('click', () => {
+            isPlaying = false;
+            updatePauseButton();
+            clearInterval(timerInterval);
+
+            // 아직 진행 중인 잔류 학생들 기록 마감 일괄 매핑
+            studentsData.forEach(s => {
+                if(!s.dropped) {
+                    s.dropped = true;
+                    s.count = currentCount;
+                }
+            });
+
+            const tbody = document.getElementById('result-table-body');
+            tbody.innerHTML = '';
+            studentsData.forEach(s => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td class="td-num">${s.id}번 학생</td>
+                    <td class="td-score">${s.count}회</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            document.getElementById('result-modal').classList.add('visible');
+        });
+
+        // 결과 모달 종료 시 전체 초기 리로드
+        document.getElementById('close-modal-btn').addEventListener('click', () => {
+            location.reload();
+        });
+
+        /* ===== 이메일 연동 핵심 로직 (SheetJS로 바이너리 엑셀 가공 후 전송) ===== */
+        document.getElementById('btn-trigger-email').addEventListener('click', async () => {
+            const emailAddr = modalEmailInput.value.trim();
+            const statusDiv = document.getElementById('email-status-msg');
+
+            if (!emailAddr || !emailAddr.includes('@')) {
+                alert('전송받을 상대 이메일 주소를 올바르게 채워주세요.');
+                return;
+            }
+
+            statusDiv.style.color = '#3b82f6';
+            statusDiv.textContent = '📥 결과 데이터를 분석하여 엑셀 변환을 진행하고 있습니다...';
+
+            try {
+                // 1. SheetJS를 사용하여 실질적인 가공 엑셀 바이너리 데이터 준비
+                const sorted = [...studentsData].sort((a,b) => a.id - b.id);
+                const excelRows = sorted.map(s => ({
+                    "학생 번호": `${s.id}번`,
+                    "측정 기록 (회)": s.count,
+                    "PAPS 간이 등급": s.count >= 35 ? "우수" : s.count >= 20 ? "보통" : "기초체력부족",
+                    "측정 일자": new Date().toLocaleString('ko-KR')
+                }));
+
+                const worksheet = XLSX.utils.json_to_sheet(excelRows);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "PAPS 셔틀런 결과");
+
+                // 바이너리 암호화 Base64 추출 작업
+                const base64Excel = XLSX.write(workbook, { bookType: 'xlsx', type: 'base64' });
+
+                statusDiv.textContent = '🚀 Vercel 통합 이메일 게이트웨이 송신 처리 중...';
+
+                // 2. 버셀 백엔드 엔드포인트 호출 (/api/send-email 혹은 /api/send-paps API 선택)
+                const endpoint = '/api/send-email'; 
+                const response = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        email: emailAddr,
+                        xlsxBase64: base64Excel,
+                        filename: `PAPS_셔틀런_결과표_${new Date().toISOString().slice(0, 10)}.xlsx`,
+                        title: `[바다쌤 체육교실] PAPS 왕복오래달리기 전체 기록안내 엑셀파일`,
+                        studentCount: excelRows.length
+                    })
+                });
+
+                const responseText = await response.text();
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                } catch(pe) {
+                    throw new Error(
+                        `⚠️ Vercel 오류 발생! (새로운 API 파일 등록 후, Vercel 대시보드에서 'Redeploy'를 꼭 눌러서 동기화하셔야 합니다!)`
+                    );
+                }
+
+                if (response.ok && result.success) {
+                    statusDiv.style.color = '#10b981';
+                    statusDiv.textContent = result.preview 
+                        ? '🧪 (시뮬레이션 가상전송 완료) Vercel 환경변수 설정이 끝나면 실 전송이 시작됩니다.'
+                        : '🔥 전송 성공! 지정하신 이메일 메일함으로 엑셀 보고서 발송이 완료되었습니다.';
+                    alert('성공적으로 메일이 발송되었습니다!');
+                } else {
+                    throw new Error(result.error || result.detail || '메일 발송 거절됨');
+                }
+
+            } catch (err) {
+                console.error(err);
+                statusDiv.style.color = '#ef4444';
+                statusDiv.textContent = `❌ 발송 실패!\n원인: ${err.message}`;
+                alert(`⚠️ 발송 실패!\n\n원인: ${err.message || '알 수 없는 서버 환경 네트워크 장애'}`);
+            }
+        });
     </script>
-  </body>
+</body>
 </html>

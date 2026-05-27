@@ -1,8 +1,8 @@
-import nodemailer from 'nodemailer';
-import * as XLSX from 'xlsx';
+const { Resend } = require('resend');
+const XLSX = require('xlsx');
 
-export default async function handler(req, res) {
-  // CORS 설정
+module.exports = async (req, res) => {
+  // CORS 처리
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -11,12 +11,12 @@ export default async function handler(req, res) {
     'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
   );
 
-  // OPTIONS 예비 요청 처리
+  // preflight OPTIONS 요청 즉시 승인
   if (req.method === 'OPTIONS') {
-    return res.status(200).end();
+    res.status(200).end();
+    return;
   }
 
-  // POST 요청 통제
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'POST 요청만 처리 가능합니다.' });
   }
@@ -28,9 +28,18 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: '필수 데이터(teacherEmail, studentsData)가 없습니다.' });
     }
 
-    // 1. 엑셀 데이터 생성
+    const resendKey = process.env.RESEND_API_KEY;
+    if (!resendKey) {
+      return res.status(500).json({ 
+        error: '서버 환경 변수에 RESEND_API_KEY가 설정되지 않았습니다. 관리자 페이지나 환경 변수를 확인해주세요.' 
+      });
+    }
+
+    const resend = new Resend(resendKey);
+
+    // 1. xlsx를 사용해 메모리에서 엑셀 파일 버퍼(Buffer) 생성
     const worksheetData = studentsData.map(student => {
-      const isActive = student.count === null;
+      const isActive = student.count === null; // 기록이 null이면 진행중
       return {
         '순번': `${student.id}번`,
         '학생 번호': student.id,
@@ -39,35 +48,18 @@ export default async function handler(req, res) {
       };
     });
 
+    // 엑셀 시트 및 워크북 객체 빌드
     const worksheet = XLSX.utils.json_to_sheet(worksheetData);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "셔틀런 측정결과");
 
-    // 엑셀 Buffer 취득
+    // 메모리 내 Buffer 데이터로 출력
     const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
 
-    // 2. 환경변수 취득 (Vercel 대시보드와 대소문자/이름이 꼭 일치해야 합니다)
-    const gmailUser = process.env.GMAIL_USER;
-    const gmailPass = process.env.GMAIL_PASS; 
-
-    if (!gmailUser || !gmailPass) {
-      return res.status(500).json({ 
-        error: '서버 환경 변수에 GMAIL_USER 또는 GMAIL_PASS가 설정되지 않았습니다.' 
-      });
-    }
-
-    // 3. SMTP 트랜스포터 설정
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: gmailUser,
-        pass: gmailPass
-      },
-    });
-
-    // 4. 메일 구조화
-    const mailOptions = {
-      from: `PAPS 실시간 시스템 <${gmailUser}>`,
+    // 2. Resend 이메일 발송 실행
+    // Resend 무료 onboarding 도메인(onboarding@resend.dev)을 기본 발송자로 사용합니다.
+    const response = await resend.emails.send({
+      from: 'onboarding@resend.dev',
       to: teacherEmail,
       subject: `[PAPS 측정보고서] 왕복오래달리기 기록 결과 서류`,
       html: `
@@ -97,19 +89,20 @@ export default async function handler(req, res) {
           content: excelBuffer,
         }
       ]
-    };
+    });
 
-    // 이메일 발송 실행
-    const info = await transporter.sendMail(mailOptions);
+    if (response.error) {
+      throw new Error(response.error.message || JSON.stringify(response.error));
+    }
 
     return res.status(200).json({ 
       success: true, 
       message: '이메일이 등록된 교사 주소로 완벽하게 발송되었습니다!', 
-      messageId: info.messageId 
+      data: response.data 
     });
 
   } catch (error) {
     console.error('PAPS 메일링 백엔드 오류:', error);
     return res.status(500).json({ error: `서버 내부 에러로 발송 실패했습니다: ${error.message}` });
   }
-}
+};

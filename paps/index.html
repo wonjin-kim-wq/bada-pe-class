@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
+    <!-- ★ 구글 애널리틱스 (Google Tag) 탑재 ★ -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-TKGDQZKW20"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
@@ -136,6 +137,7 @@
         .stepper input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
         .stepper input[type=number] { -moz-appearance: textfield; }
 
+        /* 신규: 교사 이메일 폼 스타일 */
         .setup-input-text {
             width: 100%;
             background: var(--bg-deep);
@@ -461,6 +463,7 @@
         .result-scroll .td-score { font-weight: 900; color: var(--accent-red); }
         .result-scroll .td-active { color: var(--success); font-weight: 600; }
 
+        /* 신규: 엑셀 전송 컨트롤 영역 */
         .modal-actions {
             display: flex;
             flex-direction: column;
@@ -501,6 +504,7 @@
         }
         .btn-close-modal:hover { background: #243352; }
 
+        /* 신규: 토스트 알림창 공통 레이아웃 */
         #paps-toast {
             position: fixed;
             bottom: 40px;
@@ -544,6 +548,7 @@
                 <div class="setup-title">SHUTTLE RUN</div>
                 <div class="setup-subtitle">PAPS 왕복오래달리기 기록장</div>
 
+                <!-- ★ 교사 이메일 입력창 파트 생성 ★ -->
                 <label class="setup-label" for="teacher-email">교사 이메일 (엑셀 보고서 수신용)</label>
                 <input type="email" id="teacher-email" placeholder="example@email.com" class="setup-input-text" required>
 
@@ -556,7 +561,7 @@
 
                 <button id="start-btn" class="start-btn">측정 시작</button>
             </div>
-            <a href="/" class="home-link">홈으로 돌아가기</a>
+            <a href="../index.php" class="home-link">홈으로 돌아가기</a>
         </div>
     </div>
 
@@ -565,6 +570,7 @@
             <div class="counter-panel">
                 <span class="counter-label">CURRENT LAP</span>
 
+                <!-- 일시정지 / 재생 버튼 -->
                 <div class="playback-controls">
                     <button id="btn-pause" class="btn-playback playing" title="일시정지 / 재생">▶</button>
                 </div>
@@ -587,6 +593,7 @@
         </div>
     </div>
 
+    <!-- 결과 모달 창 (메일 발송 액션 탑재 완료) -->
     <div id="result-modal">
         <div class="modal-box">
             <div class="modal-title">FINAL RESULT</div>
@@ -602,6 +609,7 @@
                 </table>
             </div>
             <div class="modal-actions">
+                <!-- ★ [측정 결과 메일 발송] 버튼 탑재 및 상태 제어 ★ -->
                 <button id="send-mail-btn" class="btn-send-mail">
                     <span>✉️ 측정 결과 메일 발송 (Excel)</span>
                 </button>
@@ -610,8 +618,10 @@
         </div>
     </div>
 
+    <!-- 토스트 피드백 알림창 -->
     <div id="paps-toast"></div>
 
+    <!-- ★ YouTube 스크립트 완전 제거, 로컬 Audio 사용 -->
     <script>
         /* ===== STATE ===== */
         let audio;
@@ -623,9 +633,9 @@
 
         const AUDIO_SRC = 'shuttle_run.mp3';
 
-        /* ===== SHUTTLE TIMINGS ===== */
+        /* ===== SHUTTLE TIMINGS (공식 비프테스트 표 + 영상 오프셋 29초) ===== */
         const shuttleTimings = (() => {
-            const OFFSET = 29; 
+            const OFFSET = 29; // 음원 앞 멘트/안내 시간
             const stages = [
                 { start: 0     + OFFSET, laps: 7,  lapTime: 9.00 },
                 { start: 63    + OFFSET, laps: 8,  lapTime: 8.00 },
@@ -683,16 +693,18 @@
                 if (!audio) return;
                 const t = audio.currentTime;
 
+                // 시간 표시
                 const mm = String(Math.floor(t / 60)).padStart(2, '0');
                 const ss = String(Math.floor(t % 60)).padStart(2, '0');
                 document.getElementById('time-display').textContent = `${mm}:${ss}`;
 
-                const duration = audio.duration;
-                if (duration && !isNaN(duration) && isFinite(duration)) {
-                    const pct = (t / duration) * 100;
+                // 진행률 표시
+                if (audio.duration) {
+                    const pct = (t / audio.duration) * 100;
                     document.getElementById('progress-bar').style.width = pct + '%';
                 }
 
+                // 카운트 계산
                 let calc = 0;
                 for (let i = 0; i < shuttleTimings.length; i++) {
                     if (t >= shuttleTimings[i]) calc = i + 1; else break;
@@ -722,7 +734,7 @@
             }
         }
 
-        /* ===== TOAST FUNCTION ===== */
+        /* ===== TOAST FUNCTION (발송 알림용) ===== */
         function showPapsToast(msg) {
             const toast = document.getElementById('paps-toast');
             toast.textContent = msg;
@@ -735,6 +747,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             initAudio();
 
+            // ★ 페이지 로드 시 LocalStorage에 안전하게 저장해둔 교사 이메일 주소 복원 ★
             const savedEmail = localStorage.getItem('paps_teacher_email');
             if (savedEmail) {
                 document.getElementById('teacher-email').value = savedEmail;
@@ -764,6 +777,7 @@
         document.getElementById('start-btn').addEventListener('click', () => {
             const emailInput = document.getElementById('teacher-email').value.trim();
 
+            // 교사 이메일 유효성 검사
             if (!emailInput) {
                 alert('PAPS 측정 결과를 받아보실 교사 이메일을 입력해야 시작하실 수 있습니다.');
                 return;
@@ -773,6 +787,7 @@
                 return;
             }
 
+            // ★ 교사 이메일 주소 저장 및 로컬스토리지 백업 ★
             teacherEmail = emailInput;
             localStorage.setItem('paps_teacher_email', emailInput);
 
@@ -798,46 +813,21 @@
             studentsData.forEach(s => {
                 const card = document.createElement('div');
                 card.className = 's-card';
-                if (s.dropped) {
-                    card.classList.add('dropped');
-                }
                 card.dataset.id = s.id;
                 card.innerHTML = `
                     <span class="s-num">${s.id}</span>
-                    <span class="s-score">${s.count !== null ? s.count : 0}</span>
+                    <span class="s-score">0</span>
                 `;
 
                 let timer;
-                let isLongPress = false;
-
-                const startPress = () => { 
-                    isLongPress = false;
-                    timer = setTimeout(() => { 
-                        isLongPress = true;
-                        editScore(s.id, card); 
-                    }, 650); 
-                };
-
-                const endPress = () => {
-                    clearTimeout(timer);
-                };
-
+                const startPress = () => { timer = setTimeout(() => editScore(s.id, card), 700); };
+                const endPress = () => clearTimeout(timer);
                 card.addEventListener('mousedown', startPress);
                 card.addEventListener('touchstart', startPress, { passive: true });
                 card.addEventListener('mouseup', endPress);
                 card.addEventListener('touchend', endPress);
 
-                card.addEventListener('click', () => { 
-                    if (isLongPress) {
-                        isLongPress = false;
-                        return;
-                    }
-                    if (!s.dropped) {
-                        dropStudent(s.id, card); 
-                    } else {
-                        editScore(s.id, card);
-                    }
-                });
+                card.addEventListener('click', () => { if (!s.dropped) dropStudent(s.id, card); });
                 grid.appendChild(card);
             });
         }
@@ -852,19 +842,12 @@
 
         function editScore(id, el) {
             const s = studentsData.find(x => x.id === id);
-            const val = prompt(`${id}번 학생의 기록을 입력하세요:\n(빈 칸으로 제출 시 탈락 취소 및 진행중 상태로 복구됩니다)`, s.count !== null ? s.count : currentCount);
-            if (val !== null) {
-                if (val.trim() === '') {
-                    s.count = null;
-                    s.dropped = false;
-                    el.classList.remove('dropped');
-                    el.querySelector('.s-score').textContent = '0';
-                } else if (!isNaN(val)) {
-                    s.count = parseInt(val);
-                    s.dropped = true;
-                    el.classList.add('dropped');
-                    el.querySelector('.s-score').textContent = s.count;
-                }
+            const val = prompt(`${id}번 학생의 기록을 입력하세요:`, s.count ?? currentCount);
+            if (val !== null && !isNaN(val) && val.trim() !== '') {
+                s.count = parseInt(val);
+                s.dropped = true;
+                el.classList.add('dropped');
+                el.querySelector('.s-score').textContent = s.count;
             }
         }
 
@@ -887,6 +870,7 @@
                 tbody.appendChild(tr);
             });
 
+            // 모달 오픈 시 전송 버튼 상태값들 초기 리셋
             const sendBtn = document.getElementById('send-mail-btn');
             sendBtn.disabled = false;
             sendBtn.innerHTML = `<span>✉️ 측정 결과 메일 발송 (Excel)</span>`;
@@ -901,15 +885,15 @@
             }
         });
 
-        /* ===== ★ 변동 파트: 이메일 전송 API 요청 경로 수정 완료 ★ ===== */
+        /* ===== ★ 신규: 이메일 전송 API 요청 펫치 함수 ★ ===== */
         document.getElementById('send-mail-btn').addEventListener('click', async () => {
             const sendBtn = document.getElementById('send-mail-btn');
             sendBtn.disabled = true;
             sendBtn.innerHTML = `<span>⏳ 엑셀 보고서 변환 및 메일 전송 중...</span>`;
 
             try {
-                // Vercel 인식을 완벽하게 보장하기 위해 확장자(.js)를 주소 뒤에 명시했습니다.
-                const response = await fetch('/api/send-paps.js', {
+                // Vercel Serverless API 주소인 '/api/send-paps' 로 가변 배열과 이메일을 POST 전송합니다.
+                const response = await fetch('/api/send-paps', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'

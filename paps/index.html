@@ -240,6 +240,14 @@
             letter-spacing: 2px;
         }
 
+        .audio-credit {
+            position: absolute;
+            bottom: 10px;
+            font-size: 11px;
+            color: var(--text-muted);
+            letter-spacing: 0.5px;
+        }
+
         .playback-controls {
             position: absolute;
             top: 14px;
@@ -528,6 +536,7 @@
 
                 <div id="main-counter">0</div>
                 <span id="time-display" class="timer-display">00:00</span>
+                <span class="audio-credit">음원 출처: 훈쌤커버리</span>
                 <div id="progress-bar" class="progress-track" style="width:0%"></div>
             </div>
         </div>
@@ -574,12 +583,14 @@
 
     <script>
         /* ===== STATE ===== */
-        let audioContext;
+        let audio;
         let isPlaying = false;
-        let currentTime = 0;
         let currentCount = 0;
-        let timerInterval;
+        let syncInterval;
         let studentsData = [];
+
+        /* ★ 음원 파일 원천 지정 */
+        const AUDIO_SRC = 'shuttle_run.mp3';
 
         // 이메일 주소 브라우저 영구보존
         const emailInput = document.getElementById('teacher-email');
@@ -589,6 +600,7 @@
             const savedEmail = localStorage.getItem('paps_saved_email') || '';
             emailInput.value = savedEmail;
             modalEmailInput.value = savedEmail;
+            initAudio();
         });
 
         emailInput.addEventListener('input', () => {
@@ -601,8 +613,8 @@
         });
 
         /* ===== SHUTTLE TIMINGS (29초 오프셋 적용 공식 비프테스트 타임라인) ===== */
-        const OFFSET = 29;
         const shuttleTimings = (() => {
+            const OFFSET = 29;
             const stages = [
                 { start: 0     + OFFSET, laps: 7,  lapTime: 9.00 },
                 { start: 63    + OFFSET, laps: 8,  lapTime: 8.00 },
@@ -614,6 +626,11 @@
                 { start: 442.2 + OFFSET, laps: 11, lapTime: 6.00 },
                 { start: 508.2 + OFFSET, laps: 11, lapTime: 5.76 },
                 { start: 571.6 + OFFSET, laps: 11, lapTime: 5.54 },
+                { start: 632.5 + OFFSET, laps: 12, lapTime: 5.33 },
+                { start: 696.5 + OFFSET, laps: 12, lapTime: 5.14 },
+                { start: 758.2 + OFFSET, laps: 13, lapTime: 4.97 },
+                { start: 822.8 + OFFSET, laps: 13, lapTime: 4.80 },
+                { start: 885.2 + OFFSET, laps: 13, lapTime: 4.65 },
             ];
             const beeps = [];
             stages.forEach(s => {
@@ -623,31 +640,77 @@
             return beeps;
         })();
 
-        // 비프음 가동기 (Web Audio API 기술을 사용하여 내장 음원이 없어도 영롱한 도달 벨소리를 자체 생성합니다.)
-        function playSynthesizedBeep() {
-            try {
-                if (!audioContext) {
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                // [오디오 제한 해제 해결] 브라우저 보호 정책에 의해 일시정지(suspended)된 경우 강제 재생 활성 상태로 전환(resume)합니다.
-                if (audioContext.state === 'suspended') {
-                    audioContext.resume();
-                }
-                const osc = audioContext.createOscillator();
-                const gain = audioContext.createGain();
-                
-                osc.type = 'sine';
-                osc.frequency.setValueAtTime(1000, audioContext.currentTime); // 1000Hz 맑고 청아한 신호음
-                gain.gain.setValueAtTime(0.3, audioContext.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.35);
+        /* ===== AUDIO SETUP (안정적인 로컬 HTML5 Audio 엔진 세팅) ===== */
+        function initAudio() {
+            audio = new Audio(AUDIO_SRC);
+            audio.preload = 'auto';
 
-                osc.connect(gain);
-                gain.connect(audioContext.destination);
-                osc.start(audioContext.currentTime);
-                osc.stop(audioContext.currentTime + 0.4);
-            } catch (err) {
-                console.warn('사운드 신호 발생 에러:', err);
-            }
+            audio.addEventListener('play', () => {
+                isPlaying = true;
+                startSyncLoop();
+                updatePauseButton();
+            });
+            audio.addEventListener('pause', () => {
+                isPlaying = false;
+                stopSyncLoop();
+                updatePauseButton();
+            });
+            audio.addEventListener('ended', () => {
+                isPlaying = false;
+                stopSyncLoop();
+                updatePauseButton();
+            });
+            audio.addEventListener('error', () => {
+                console.warn('음원 로딩 대기 혹은 단순 누락 상태:', AUDIO_SRC);
+            });
+        }
+
+        /* ===== REAL-TIME SYNC LOOP (오디오에 종속된 50ms 간격 안심 싱크) ===== */
+        function startSyncLoop() {
+            if (syncInterval) clearInterval(syncInterval);
+            syncInterval = setInterval(() => {
+                if (!audio) return;
+                const t = audio.currentTime;
+
+                // mm:ss 포맷 출력
+                const m = String(Math.floor(t / 60)).padStart(2, '0');
+                const s = String(Math.floor(t % 60)).padStart(2, '0');
+                document.getElementById('time-display').textContent = `${m}:${s}`;
+
+                // 프로그레스 바 동기화
+                if (audio.duration) {
+                    const pct = (t / audio.duration) * 100;
+                    document.getElementById('progress-bar').style.width = pct + '%';
+                }
+
+                // 현재 재생 시간 기반 랩(합산 회수) 정밀 연산
+                let calc = 0;
+                for (let i = 0; i < shuttleTimings.length; i++) {
+                    if (t >= shuttleTimings[i]) calc = i + 1; else break;
+                }
+
+                if (calc !== currentCount) {
+                    currentCount = calc;
+                    updateCounterDisplay();
+                }
+            }, 50);
+        }
+
+        function stopSyncLoop() { 
+            clearInterval(syncInterval); 
+        }
+
+        function updateCounterDisplay() {
+            const el = document.getElementById('main-counter');
+            el.textContent = currentCount;
+            el.classList.remove('pop');
+            void el.offsetWidth;
+            el.classList.add('pop');
+        }
+
+        function updatePauseButton() {
+            const btn = document.getElementById('btn-pause');
+            btn.textContent = isPlaying ? '⏸' : '▶';
         }
 
         /* ===== SETUP SCREEN CONTROLS ===== */
@@ -668,18 +731,6 @@
                 return;
             }
 
-            // [오디오 버그 해결] 시작 버튼 클릭 인터랙션 시점에 즉각 AudioContext 활성화 및 락 제거를 지원합니다.
-            try {
-                if (!audioContext) {
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                if (audioContext.state === 'suspended') {
-                    audioContext.resume();
-                }
-            } catch (e) {
-                console.warn('시작 시점 오디오 활성화 실패:', e);
-            }
-
             const num = parseInt(countInput.value);
             studentsData = Array.from({ length: num }, (_, i) => ({ id: i + 1, count: null, dropped: false }));
 
@@ -687,69 +738,22 @@
             document.getElementById('main-screen').classList.add('visible');
             renderGrid();
 
-            isPlaying = true;
-            startMeasurementTimer();
-            updatePauseButton();
+            // 사용자 연동 제스처 내부에서 즉시 물리 오디오 play()를 호출하여 Autoplay 제한 정책 통과
+            if (audio) {
+                audio.currentTime = 0;
+                audio.play().catch(e => {
+                    console.warn('사용자 정책 차단 감지, ▶ 버튼 클릭 유도 필요:', e);
+                });
+            }
         });
 
-        /* ===== TIMER & SYNC LOOP ===== */
-        function startMeasurementTimer() {
-            let lastTick = Date.now();
-            timerInterval = setInterval(() => {
-                const now = Date.now();
-                const delta = (now - lastTick) / 1000;
-                lastTick = now;
-
-                if (isPlaying) {
-                    currentTime += delta;
-
-                    // mm:ss 포맷 출력
-                    const m = String(Math.floor(currentTime / 60)).padStart(2, '0');
-                    const s = String(Math.floor(currentTime % 60)).padStart(2, '0');
-                    document.getElementById('time-display').textContent = `${m}:${s}`;
-
-                    // 현재 시간 기반 랩(합산 회수) 연산
-                    let calc = 0;
-                    for (let i = 0; i < shuttleTimings.length; i++) {
-                        if (currentTime >= shuttleTimings[i]) calc = i + 1; else break;
-                    }
-
-                    if (calc !== currentCount) {
-                        currentCount = calc;
-                        playSynthesizedBeep();
-                        updateCounterDisplay();
-                    }
-                }
-            }, 50);
-        }
-
-        function updateCounterDisplay() {
-            const el = document.getElementById('main-counter');
-            el.textContent = currentCount;
-            el.classList.remove('pop');
-            void el.offsetWidth;
-            el.classList.add('pop');
-        }
-
-        function updatePauseButton() {
-            const btn = document.getElementById('btn-pause');
-            btn.textContent = isPlaying ? '⏸' : '▶';
-        }
-
         document.getElementById('btn-pause').addEventListener('click', () => {
-            // [오디오 버그 해결] 수동 토글 시점에서도 AudioContext 활성화 상태를 복구시킵니다.
-            try {
-                if (!audioContext) {
-                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
-                }
-                if (audioContext.state === 'suspended') {
-                    audioContext.resume();
-                }
-            } catch (e) {
-                console.warn('토글 시점 오디오 활성화 실패:', e);
+            if (!audio) return;
+            if (isPlaying) {
+                audio.pause();
+            } else {
+                audio.play().catch(e => console.warn(e));
             }
-            isPlaying = !isPlaying;
-            updatePauseButton();
         });
 
         /* ===== STUDENT GRID ===== */
@@ -783,11 +787,10 @@
         });
 
         document.getElementById('export-btn').addEventListener('click', () => {
-            isPlaying = false;
-            updatePauseButton();
-            clearInterval(timerInterval);
+            if (audio) audio.pause();
+            stopSyncLoop();
 
-            // 아직 진행 중인 잔류 학생들 기록 마감 일괄 매핑
+            // 진행 중인 잔류 학생들 기록 마감 일괄 매핑
             studentsData.forEach(s => {
                 if(!s.dropped) {
                     s.dropped = true;
@@ -814,7 +817,7 @@
             location.reload();
         });
 
-        /* ===== 이메일 연동 핵심 로직 (SheetJS로 바이너리 엑셀 가공 후 전송) ===== */
+        /* ===== 이메일 연동 로직 (SheetJS로 바이너리 엑셀 가공 후 전송) ===== */
         document.getElementById('btn-trigger-email').addEventListener('click', async () => {
             const emailAddr = modalEmailInput.value.trim();
             const statusDiv = document.getElementById('email-status-msg');
@@ -841,12 +844,12 @@
                 const workbook = XLSX.utils.book_new();
                 XLSX.utils.book_append_sheet(workbook, worksheet, "PAPS 셔틀런 결과");
 
-                // 바이너리 암호화 Base64 추출 작업
+                // 바이너리 에코 인코딩 Base64 추출
                 const base64Excel = XLSX.write(workbook, { bookType: 'xlsx', type: 'base64' });
 
                 statusDiv.textContent = '🚀 Vercel 통합 이메일 게이트웨이 송신 처리 중...';
 
-                // 2. 버셀 백엔드 엔드포인트 호출 (/api/send-email 혹은 /api/send-paps API 선택)
+                // 2. 버셀 백엔드 엔드포인트 호출 (/api/send-email)
                 const endpoint = '/api/send-email'; 
                 const response = await fetch(endpoint, {
                     method: 'POST',

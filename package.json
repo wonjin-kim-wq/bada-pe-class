@@ -1,16 +1,8 @@
 {
-  "name": "paps-shuttle-run",
+  "name": "paps-shuttlerun-system",
   "version": "1.0.0",
-  "description": "PAPS shuttle run recording with Excel auto email reporter",
-  "main": "index.html",
-  "scripts": {
-    "start": "echo 'Frontend is pure HTML/CSS/JS, served automatically by Vercel'"
-  },
   "dependencies": {
     "resend": "^3.0.0",
     "xlsx": "^0.18.5"
-  },
-  "engines": {
-    "node": ">=18.x"
   }
 }

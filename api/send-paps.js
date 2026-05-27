@@ -1,16 +1,8 @@
-/**
- * Vercel Serverless Function: /api/send-paps
- * 
- * 프론트엔드로부터 교사 이메일과 전체 학생 PAPS 결과를 받아
- * 메모리 상에서 엑셀 파일(Buffer)을 생성한 후,
- * nodemailer를 사용하여 Gmail SMTP(앱 비밀번호)를 통해 첨부파일로 발송합니다.
- */
+import nodemailer from 'nodemailer';
+import * as XLSX from 'xlsx';
 
-const nodemailer = require('nodemailer');
-const XLSX = require('xlsx');
-
-module.exports = async (req, res) => {
-  // CORS 설정 (브라우저 차단 방지)
+export default async function handler(req, res) {
+  // CORS 설정
   res.setHeader('Access-Control-Allow-Credentials', true);
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
@@ -19,10 +11,9 @@ module.exports = async (req, res) => {
     'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
   );
 
-  // OPTIONS 예비 요청 즉시 반환
+  // OPTIONS 예비 요청 처리
   if (req.method === 'OPTIONS') {
-    res.status(200).end();
-    return;
+    return res.status(200).end();
   }
 
   // POST 요청 통제
@@ -37,7 +28,7 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: '필수 데이터(teacherEmail, studentsData)가 없습니다.' });
     }
 
-    // 1. xlsx 데이터 시트 및 워크북 메모리 내에 구현
+    // 1. 엑셀 데이터 생성
     const worksheetData = studentsData.map(student => {
       const isActive = student.count === null;
       return {
@@ -55,17 +46,17 @@ module.exports = async (req, res) => {
     // 엑셀 Buffer 취득
     const excelBuffer = XLSX.write(workbook, { type: 'buffer', bookType: 'xlsx' });
 
-    // 2. Gmail SMTP 트랜스포터 설정 검사
+    // 2. 환경변수 취득 (Vercel 대시보드와 대소문자/이름이 꼭 일치해야 합니다)
     const gmailUser = process.env.GMAIL_USER;
-    const gmailPass = process.env.GMAIL_PASS;
+    const gmailPass = process.env.GMAIL_PASS; 
 
     if (!gmailUser || !gmailPass) {
       return res.status(500).json({ 
-        error: '서버 환경 변수에 GMAIL_USER 또는 GMAIL_PASS(앱 비밀번호)가 설정되지 않았습니다.' 
+        error: '서버 환경 변수에 GMAIL_USER 또는 GMAIL_PASS가 설정되지 않았습니다.' 
       });
     }
 
-    // Gmail SMTP 연결체 선언
+    // 3. SMTP 트랜스포터 설정
     const transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
@@ -74,7 +65,7 @@ module.exports = async (req, res) => {
       },
     });
 
-    // 메일 구조 명시화
+    // 4. 메일 구조화
     const mailOptions = {
       from: `PAPS 실시간 시스템 <${gmailUser}>`,
       to: teacherEmail,
@@ -121,4 +112,4 @@ module.exports = async (req, res) => {
     console.error('PAPS 메일링 백엔드 오류:', error);
     return res.status(500).json({ error: `서버 내부 에러로 발송 실패했습니다: ${error.message}` });
   }
-};
+}

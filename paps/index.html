@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PAPS 셔틀런 기록장</title>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;800;900&family=Orbitron:wght@700;900&display=swap" rel="stylesheet">
-    
-    <!-- 엑셀 파일(.xlsx)을 브라우저 브라우저 메모리상에서 즉석으로 생성하는 최신 SheetJS 라이브러리 탑재 -->
+    <title>PAPS 셔틀런 기록장 & 메일 전송기</title>
+    <!-- 구글 폰트 및 아이콘 수급 -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;800;900&family=Orbitron:wght@750;900&display=swap" rel="stylesheet">
+    <!-- SheetJS (실제 엑셀 바이너리 파일 생성을 위한 엔진) -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-
     <style>
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -52,65 +51,45 @@
             flex-direction: column;
             align-items: center;
             gap: 20px;
+            width: 100%;
+            max-width: 420px;
         }
 
         .setup-box {
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 20px;
-            padding: 40px 36px;
+            padding: 40px 28px;
             width: 100%;
-            max-width: 420px;
             text-align: center;
             box-shadow: 0 20px 60px rgba(0,0,0,0.5), 0 0 80px var(--accent-blue-glow);
         }
 
         .setup-title {
             font-family: 'Orbitron', sans-serif;
-            font-size: 28px;
+            font-size: 26px;
             font-weight: 900;
             color: var(--accent-blue);
-            letter-spacing: 3px;
+            letter-spacing: 2px;
             margin-bottom: 8px;
             text-shadow: 0 0 20px var(--accent-blue-glow);
         }
 
         .setup-subtitle {
-            font-size: 13px;
+            font-size: 12px;
             color: var(--text-muted);
-            margin-bottom: 30px;
-            letter-spacing: 1px;
+            margin-bottom: 28px;
+            letter-spacing: 0.5px;
         }
 
         .setup-label {
             display: block;
             text-align: left;
             font-size: 13px;
-            font-weight: 600;
-            color: var(--text-muted);
-            margin-bottom: 10px;
+            font-weight: 700;
+            color: #94a3b8;
+            margin-bottom: 8px;
             letter-spacing: 0.5px;
-        }
-
-        /* 이메일 주소 입력 필드 추가 브랜딩 스타일 */
-        .email-field {
-            width: 100%;
-            background: var(--bg-deep);
-            border: 1px solid var(--border);
-            border-radius: 12px;
-            padding: 14px;
-            font-size: 15px;
-            font-weight: 600;
-            color: var(--text-primary);
-            outline: none;
-            box-sizing: border-box;
-            text-align: center;
-            margin-bottom: 24px;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .email-field:focus {
-            border-color: var(--accent-blue);
-            box-shadow: 0 0 10px rgba(59, 130, 246, 0.2);
         }
 
         .stepper {
@@ -149,9 +128,21 @@
             transition: border-color 0.2s;
         }
         .stepper input:focus { border-color: var(--accent-blue); }
-        .stepper input[type=number]::-webkit-outer-spin-button,
-        .stepper input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
-        .stepper input[type=number] { -moz-appearance: textfield; }
+
+        .input-email {
+            width: 100%;
+            background: var(--bg-deep);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            font-size: 15px;
+            color: var(--text-primary);
+            outline: none;
+            transition: border-color 0.2s;
+            margin-bottom: 28px;
+            text-align: center;
+        }
+        .input-email:focus { border-color: var(--accent-blue); }
 
         .start-btn {
             width: 100%;
@@ -195,8 +186,8 @@
             display: flex;
             gap: 12px;
             margin-bottom: 12px;
-            height: 60dvh;
-            min-height: 300px;
+            height: 50dvh;
+            min-height: 260px;
         }
 
         .counter-panel {
@@ -225,7 +216,7 @@
 
         #main-counter {
             font-family: 'Orbitron', sans-serif;
-            font-size: clamp(240px, 60vw, 60dvh);
+            font-size: clamp(180px, 45vw, 45dvh);
             font-weight: 900;
             color: var(--accent-red);
             line-height: 1;
@@ -235,7 +226,7 @@
 
         @keyframes counter-pop {
             0% { transform: scale(1); }
-            40% { transform: scale(1.08); text-shadow: 0 0 60px var(--accent-red-glow), 0 0 120px rgba(239,68,68,0.2); }
+            40% { transform: scale(1.08); text-shadow: 0 0 60px var(--accent-red-glow); }
             100% { transform: scale(1); }
         }
         #main-counter.pop { animation: counter-pop 0.25s ease-out; }
@@ -249,15 +240,6 @@
             letter-spacing: 2px;
         }
 
-        .audio-credit {
-            position: absolute;
-            bottom: 10px;
-            font-size: 11px;
-            color: var(--text-muted);
-            letter-spacing: 0.5px;
-        }
-
-        /* 재생 컨트롤 */
         .playback-controls {
             position: absolute;
             top: 14px;
@@ -289,7 +271,6 @@
             height: 3px;
             background: linear-gradient(90deg, var(--accent-blue), #06b6d4);
             transition: width 0.1s linear;
-            border-radius: 0 2px 0 0;
         }
 
         /* Student Grid */
@@ -300,7 +281,6 @@
             padding-bottom: 8px;
         }
         .grid-scroll::-webkit-scrollbar { width: 5px; }
-        .grid-scroll::-webkit-scrollbar-track { background: transparent; }
         .grid-scroll::-webkit-scrollbar-thumb { background: #2a3550; border-radius: 10px; }
 
         .student-grid {
@@ -321,10 +301,8 @@
             min-height: 100px;
             cursor: pointer;
             transition: all 0.25s ease;
-            position: relative;
         }
         .s-card:hover { border-color: var(--accent-blue); box-shadow: 0 0 16px var(--accent-blue-glow); }
-        .s-card:active { transform: scale(0.94); }
 
         .s-card .s-num {
             font-size: 22px;
@@ -346,9 +324,7 @@
             background: var(--card-dropped);
             border-color: #2a2a3e;
             cursor: default;
-            box-shadow: none;
         }
-        .s-card.dropped:hover { border-color: #2a2a3e; box-shadow: none; }
         .s-card.dropped .s-num { color: #555a70; }
         .s-card.dropped .s-score { opacity: 1; transform: translateY(0); }
 
@@ -376,23 +352,14 @@
 
         .btn-export {
             padding: 12px 28px;
-            border: 1px solid var(--accent-red);
-            background: linear-gradient(135deg, #7f1d1d, #991b1b);
+            border: none;
+            background: linear-gradient(135deg, #ef4444, #b91c1c);
             color: #fff;
             font-size: 14px;
-            font-weight: 800;
+            font-weight: 850;
             border-radius: 12px;
             cursor: pointer;
             transition: all 0.2s;
-            letter-spacing: 0.5px;
-        }
-        .btn-export:hover { box-shadow: 0 4px 20px rgba(239, 68, 68, 0.3); }
-
-        .help-text {
-            font-size: 11px;
-            color: var(--text-muted);
-            text-align: center;
-            line-height: 1.6;
         }
 
         /* ===== RESULT MODAL ===== */
@@ -400,7 +367,7 @@
             display: none;
             position: fixed;
             inset: 0;
-            background: rgba(0,0,0,0.88);
+            background: rgba(0,0,0,0.92);
             backdrop-filter: blur(8px);
             z-index: 100;
             align-items: center;
@@ -413,7 +380,7 @@
             background: var(--bg-card);
             border: 1px solid var(--border);
             border-radius: 20px;
-            padding: 24px;
+            padding: 28px;
             width: 100%;
             max-width: 440px;
             max-height: 90dvh;
@@ -428,8 +395,8 @@
             font-weight: 700;
             color: var(--accent-blue);
             text-align: center;
-            margin-bottom: 16px;
-            letter-spacing: 2px;
+            margin-bottom: 20px;
+            letter-spacing: 2.5px;
         }
 
         .result-scroll {
@@ -437,10 +404,9 @@
             overflow-y: auto;
             background: var(--bg-deep);
             border-radius: 12px;
-            padding: 12px 14px;
+            padding: 12px 16px;
             border: 1px solid var(--border);
-            margin-bottom: 14px;
-            min-height: 150px;
+            margin-bottom: 20px;
         }
 
         .result-scroll table { width: 100%; border-collapse: collapse; }
@@ -461,114 +427,107 @@
         .result-scroll tr:last-child td { border-bottom: none; }
         .result-scroll .td-num { font-weight: 600; color: #80a8d0; }
         .result-scroll .td-score { font-weight: 900; color: var(--accent-red); }
-        .result-scroll .td-active { color: var(--success); font-weight: 600; }
 
-        /* 결과 화면 내 원클릭 이메일 송부 세션 */
-        .email-send-section {
-            border-top: 1px dashed var(--border);
-            padding-top: 14px;
-            margin-bottom: 14px;
+        .email-send-area {
+            background: var(--bg-surface);
+            border: 1px dashed var(--border);
+            border-radius: 12px;
+            padding: 14px;
+            margin-bottom: 16px;
         }
+
+        .email-send-area label {
+            display: block;
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            font-weight: 700;
+        }
+
+        .email-status-text {
+            font-size: 12px;
+            margin-top: 8px;
+            text-align: center;
+            line-height: 1.5;
+        }
+
         .btn-email-submit {
             width: 100%;
             padding: 12px;
             border: none;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #10b981, #047857);
-            color: #fff;
-            font-size: 14px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, var(--accent-blue-deep), var(--accent-blue));
+            color: white;
             font-weight: 800;
+            font-size: 14px;
             cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
+            transition: opacity 0.2s;
         }
-        .btn-email-submit:hover:not(:disabled) {
-            box-shadow: 0 0 15px rgba(16, 185, 129, 0.4);
-            transform: translateY(-0.5px);
-        }
-        .btn-email-submit:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        #email-status-text {
-            font-size: 11px;
-            color: var(--text-muted);
-            text-align: center;
-            margin-top: 6px;
-            line-height: 1.4;
-        }
+        .btn-email-submit:hover { opacity: 0.9; }
 
         .btn-close-modal {
             width: 100%;
             padding: 14px;
             border: none;
             border-radius: 12px;
-            background: linear-gradient(135deg, var(--accent-blue-deep), var(--accent-blue));
-            color: #fff;
+            background: #27272a;
+            color: #d4d4d8;
             font-size: 15px;
             font-weight: 800;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: background-color 0.2s;
         }
-        .btn-close-modal:hover { box-shadow: 0 4px 20px var(--accent-blue-glow); }
+        .btn-close-modal:hover { background: #3f3f46; }
 
         /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
-            .top-area { flex-direction: column; height: 60dvh; }
+            .top-area { flex-direction: column; height: auto; }
             .student-grid { grid-template-columns: repeat(4, 1fr); }
-            .help-text { display: none; }
         }
         @media (max-width: 480px) {
-            #main-counter { font-size: 50vw; }
+            #main-counter { font-size: 40vw; }
             .student-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
-            .s-card { min-height: 85px; padding: 8px 6px; }
-            .s-card .s-num { font-size: 18px; }
-            .s-card .s-score { font-size: 22px; }
+            .s-card { min-height: 85px; }
         }
     </style>
 </head>
 <body>
 
+    <!-- 설정 및 이메일 입력 화면 -->
     <div id="setup-screen">
         <div class="setup-container">
             <div class="setup-box">
                 <div class="setup-title">SHUTTLE RUN</div>
                 <div class="setup-subtitle">PAPS 왕복오래달리기 기록장</div>
 
-                <!-- 1. 첫 화면 교사 이메일 주소 입력란 구현 -->
-                <label class="setup-label" for="teacher-email-input">교사 이메일 주소</label>
-                <input type="email" id="teacher-email-input" class="email-field" placeholder="example@gmail.com">
-
-                <label class="setup-label" for="student-count">학생 수 (최대 40명)</label>
+                <label class="setup-label" for="student-count">측정 학생 수 (최대 40명)</label>
                 <div class="stepper">
                     <button id="btn-minus">−</button>
                     <input type="number" id="student-count" min="1" max="40" value="20">
                     <button id="btn-plus">+</button>
                 </div>
 
-                <button id="start-btn" class="start-btn">측정 시작</button>
+                <label class="setup-label" for="teacher-email">교사 이메일 주소</label>
+                <input type="email" id="teacher-email" class="input-email" placeholder="교사 메일주소@naver.com" required>
+
+                <button id="start-btn" class="start-btn">측정 시작하기</button>
             </div>
             <a href="../index.html" class="home-link">홈으로 돌아가기</a>
         </div>
     </div>
 
+    <!-- 주 측정 보드 화면 -->
     <div id="main-screen">
         <div class="top-area">
             <div class="counter-panel">
                 <span class="counter-label">CURRENT LAP</span>
 
-                <!-- 일시정지 / 재생 버튼 -->
                 <div class="playback-controls">
-                    <button id="btn-pause" class="btn-playback playing" title="일시정지 / 재생">▶</button>
+                    <button id="btn-pause" class="btn-playback playing">▶</button>
                 </div>
 
                 <div id="main-counter">0</div>
                 <span id="time-display" class="timer-display">00:00</span>
-                <span class="audio-credit">음원 출처: 훈쌤커버리</span>
                 <div id="progress-bar" class="progress-track" style="width:0%"></div>
             </div>
         </div>
@@ -579,15 +538,16 @@
 
         <div class="bottom-bar">
             <button id="restart-btn" class="btn-secondary">처음으로</button>
-            <span class="help-text">카드 클릭 → 탈락 처리 &nbsp;|&nbsp; 길게 누르기 → 수동 수정</span>
+            <span class="help-text" style="font-size: 11px; color:#555a70;">※ 카드 클릭 → 탈락 처리 및 기록 확정</span>
             <button id="export-btn" class="btn-export">기록 마감</button>
         </div>
     </div>
 
-    <!-- 엑셀 생성 및 원클릭 전송 인터페이스 적용 모달 -->
+    <!-- 결과 모달 및 실시간 메일 전송 패널 -->
     <div id="result-modal">
         <div class="modal-box">
             <div class="modal-title">FINAL RESULT</div>
+            
             <div class="result-scroll">
                 <table>
                     <thead>
@@ -600,39 +560,49 @@
                 </table>
             </div>
 
-            <!-- 2. 이메일 엑셀 전송 원클릭 단추 조명 배치 -->
-            <div class="email-send-section">
-                <label class="setup-label" style="font-size: 11px; margin-bottom: 5px; display: block;" for="result-email-receiver">수신받을 메일 주소</label>
-                <input type="email" id="result-email-receiver" class="email-field" style="margin-bottom: 10px; padding: 10px; font-size: 13px;" placeholder="example@gmail.com">
-                <button id="email-send-btn" class="btn-email-submit">
-                    <span>📬 엑셀 리포트 이메일로 전송</span>
-                </button>
-                <div id="email-status-text">메일 전송 클릭 시 결과 엑셀 전송이 트리거됩니다.</div>
+            <!-- 메일 발송 전진기 기지 -->
+            <div class="email-send-area">
+                <label for="modal-email">수신받을 이메일 주소</label>
+                <input type="email" id="modal-email" class="input-email" style="margin-bottom:10px; padding:10px; font-size:14px;" placeholder="example@naver.com">
+                <button id="btn-trigger-email" class="btn-email-submit">📧 엑셀 리포트 이메일로 전송</button>
+                <div id="email-status-msg" class="email-status-text"></div>
             </div>
 
-            <button id="close-modal-btn" class="btn-close-modal">확인 (종료)</button>
+            <button id="close-modal-btn" class="btn-close-modal">완료 및 홈으로</button>
         </div>
     </div>
 
-    <!-- ★ YouTube 스크립트 완전 제거, 로컬 Audio 사용 -->
     <script>
         /* ===== STATE ===== */
-        let audio;
+        let audioContext;
         let isPlaying = false;
+        let currentTime = 0;
         let currentCount = 0;
-        let syncInterval;
+        let timerInterval;
         let studentsData = [];
 
-        /*
-         * ★★★ 음원 파일 경로 설정 ★★★
-         * 이 HTML 파일과 같은 폴더에 mp3 파일을 두세요.
-         * 파일명이 다르면 아래 경로만 수정하면 됩니다.
-         */
-        const AUDIO_SRC = 'shuttle_run.mp3';
+        // 이메일 주소 브라우저 영구보존
+        const emailInput = document.getElementById('teacher-email');
+        const modalEmailInput = document.getElementById('modal-email');
 
-        /* ===== SHUTTLE TIMINGS (공식 비프테스트 표 + 영상 오프셋 29초) ===== */
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedEmail = localStorage.getItem('paps_saved_email') || '';
+            emailInput.value = savedEmail;
+            modalEmailInput.value = savedEmail;
+        });
+
+        emailInput.addEventListener('input', () => {
+            localStorage.setItem('paps_saved_email', emailInput.value);
+            modalEmailInput.value = emailInput.value;
+        });
+        modalEmailInput.addEventListener('input', () => {
+            localStorage.setItem('paps_saved_email', modalEmailInput.value);
+            emailInput.value = modalEmailInput.value;
+        });
+
+        /* ===== SHUTTLE TIMINGS (29초 오프셋 적용 공식 비프테스트 타임라인) ===== */
+        const OFFSET = 29;
         const shuttleTimings = (() => {
-            const OFFSET = 29; // 음원 앞 멘트/안내 시간
             const stages = [
                 { start: 0     + OFFSET, laps: 7,  lapTime: 9.00 },
                 { start: 63    + OFFSET, laps: 8,  lapTime: 8.00 },
@@ -644,11 +614,6 @@
                 { start: 442.2 + OFFSET, laps: 11, lapTime: 6.00 },
                 { start: 508.2 + OFFSET, laps: 11, lapTime: 5.76 },
                 { start: 571.6 + OFFSET, laps: 11, lapTime: 5.54 },
-                { start: 632.5 + OFFSET, laps: 12, lapTime: 5.33 },
-                { start: 696.5 + OFFSET, laps: 12, lapTime: 5.14 },
-                { start: 758.2 + OFFSET, laps: 13, lapTime: 4.97 },
-                { start: 822.8 + OFFSET, laps: 13, lapTime: 4.80 },
-                { start: 885.2 + OFFSET, laps: 13, lapTime: 4.65 },
             ];
             const beeps = [];
             stages.forEach(s => {
@@ -658,119 +623,30 @@
             return beeps;
         })();
 
-        /* ===== AUDIO INIT ===== */
-        function initAudio() {
-            audio = new Audio(AUDIO_SRC);
-            audio.preload = 'auto';
-
-            audio.addEventListener('play', () => {
-                isPlaying = true;
-                startSyncLoop();
-                updatePauseButton();
-            });
-            audio.addEventListener('pause', () => {
-                isPlaying = false;
-                stopSyncLoop();
-                updatePauseButton();
-            });
-            audio.addEventListener('ended', () => {
-                isPlaying = false;
-                stopSyncLoop();
-                updatePauseButton();
-            });
-            audio.addEventListener('error', () => {
-                console.warn('음원 로드 실패 또는 오프라인 상태 (인공 비프음으로 가동 가능)');
-            });
-        }
-
-        /* ===== SYNC LOOP ===== */
-        function startSyncLoop() {
-            if (syncInterval) clearInterval(syncInterval);
-            syncInterval = setInterval(() => {
-                if (!audio) return;
-                const t = audio.currentTime;
-
-                const mm = String(Math.floor(t / 60)).padStart(2, '0');
-                const ss = String(Math.floor(t % 60)).padStart(2, '0');
-                document.getElementById('time-display').textContent = `${mm}:${ss}`;
-
-                if (audio.duration) {
-                    const pct = (t / audio.duration) * 100;
-                    document.getElementById('progress-bar').style.width = pct + '%';
+        // 비프음 가동기 (Web Audio API 기술을 사용하여 내장 음원이 없어도 영롱한 도달 벨소리를 자체 생성합니다.)
+        function playSynthesizedBeep() {
+            try {
+                if (!audioContext) {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
                 }
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(1000, audioContext.currentTime); // 1000Hz 맑고 청아한 신호음
+                gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.35);
 
-                let calc = 0;
-                for (let i = 0; i < shuttleTimings.length; i++) {
-                    if (t >= shuttleTimings[i]) calc = i + 1; else break;
-                }
-                if (calc !== currentCount) { currentCount = calc; updateCounter(); }
-            }, 50);
-        }
-
-        function stopSyncLoop() { clearInterval(syncInterval); }
-
-        function updateCounter() {
-            const el = document.getElementById('main-counter');
-            el.textContent = currentCount;
-            el.classList.remove('pop');
-            void el.offsetWidth;
-            el.classList.add('pop');
-        }
-
-        function updatePauseButton() {
-            const btn = document.getElementById('btn-pause');
-            if (isPlaying) {
-                btn.textContent = '⏸';
-                btn.classList.add('playing');
-            } else {
-                btn.textContent = '▶';
-                btn.classList.remove('playing');
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                osc.start();
+                osc.stop(audioContext.currentTime + 0.4);
+            } catch (err) {
+                console.warn('사운드 신호 발생 에러:', err);
             }
         }
 
-        /* ===== 이메일 주소 관리 엔진 ===== */
-        const EMAIL_STORAGE_KEY = "paps_shuttlerun_teacher_email";
-
-        document.addEventListener('DOMContentLoaded', () => {
-            initAudio();
-
-            // 저장된 교사 이메일 조회 및 입력 필드 동기화
-            const savedEmail = localStorage.getItem(EMAIL_STORAGE_KEY) || "";
-            document.getElementById('teacher-email-input').value = savedEmail;
-            document.getElementById('result-email-receiver').value = savedEmail;
-
-            // 실시간 상호연계 입력 적용
-            document.getElementById('teacher-email-input').addEventListener('input', (e) => {
-                const mailVal = e.target.value.trim();
-                localStorage.setItem(EMAIL_STORAGE_KEY, mailVal);
-                document.getElementById('result-email-receiver').value = mailVal;
-            });
-            
-            document.getElementById('result-email-receiver').addEventListener('input', (e) => {
-                const mailVal = e.target.value.trim();
-                localStorage.setItem(EMAIL_STORAGE_KEY, mailVal);
-                document.getElementById('teacher-email-input').value = mailVal;
-            });
-
-            document.getElementById('btn-pause').addEventListener('click', () => {
-                if (!audio) return;
-                if (isPlaying) {
-                    audio.pause();
-                } else {
-                    audio.play().catch(() => {
-                        // 오디오 없으면 가상 타이머 플레이백 가동
-                        isPlaying = true;
-                        startSyncLoop();
-                        updatePauseButton();
-                    });
-                }
-            });
-
-            // 3. 📬 메일 전송 버튼 리스너 연동
-            document.getElementById('email-send-btn').addEventListener('click', generateAndSendExcelEmail);
-        });
-
-        /* ===== SETUP CONTROLS ===== */
+        /* ===== SETUP SCREEN CONTROLS ===== */
         const countInput = document.getElementById('student-count');
         document.getElementById('btn-minus').addEventListener('click', () => {
             const v = parseInt(countInput.value) || 1;
@@ -782,6 +658,12 @@
         });
 
         document.getElementById('start-btn').addEventListener('click', () => {
+            const emailValue = emailInput.value.trim();
+            if(!emailValue || !emailValue.includes('@')) {
+                alert('교사 이메일 주소를 올바르게 입력해주세요.');
+                return;
+            }
+
             const num = parseInt(countInput.value);
             studentsData = Array.from({ length: num }, (_, i) => ({ id: i + 1, count: null, dropped: false }));
 
@@ -789,12 +671,58 @@
             document.getElementById('main-screen').classList.add('visible');
             renderGrid();
 
-            if (audio) {
-                audio.currentTime = 0;
-                audio.play().catch(err => {
-                    console.warn('자동재생 차단됨, 재생 버튼을 눌러 피드백을 시작해주세요.', err);
-                });
-            }
+            isPlaying = true;
+            startMeasurementTimer();
+            updatePauseButton();
+        });
+
+        /* ===== TIMER & SYNC LOOP ===== */
+        function startMeasurementTimer() {
+            let lastTick = Date.now();
+            timerInterval = setInterval(() => {
+                const now = Date.now();
+                const delta = (now - lastTick) / 1000;
+                lastTick = now;
+
+                if (isPlaying) {
+                    currentTime += delta;
+
+                    // mm:ss 포맷 출력
+                    const m = String(Math.floor(currentTime / 60)).padStart(2, '0');
+                    const s = String(Math.floor(currentTime % 60)).padStart(2, '0');
+                    document.getElementById('time-display').textContent = `${m}:${s}`;
+
+                    // 현재 시간 기반 랩(합산 회수) 연산
+                    let calc = 0;
+                    for (let i = 0; i < shuttleTimings.length; i++) {
+                        if (currentTime >= shuttleTimings[i]) calc = i + 1; else break;
+                    }
+
+                    if (calc !== currentCount) {
+                        currentCount = calc;
+                        playSynthesizedBeep();
+                        updateCounterDisplay();
+                    }
+                }
+            }, 50);
+        }
+
+        function updateCounterDisplay() {
+            const el = document.getElementById('main-counter');
+            el.textContent = currentCount;
+            el.classList.remove('pop');
+            void el.offsetWidth;
+            el.classList.add('pop');
+        }
+
+        function updatePauseButton() {
+            const btn = document.getElementById('btn-pause');
+            btn.textContent = isPlaying ? '⏸' : '▶';
+        }
+
+        document.getElementById('btn-pause').addEventListener('click', () => {
+            isPlaying = !isPlaying;
+            updatePauseButton();
         });
 
         /* ===== STUDENT GRID ===== */
@@ -806,165 +734,132 @@
                 card.className = 's-card';
                 card.dataset.id = s.id;
                 card.innerHTML = `
-                    <span class="s-num">${s.id}</span>
+                    <span class="s-num">${s.id}번</span>
                     <span class="s-score">0</span>
                 `;
 
-                let timer;
-                const startPress = () => { timer = setTimeout(() => editScore(s.id, card), 700); };
-                const endPress = () => clearTimeout(timer);
-                card.addEventListener('mousedown', startPress);
-                card.addEventListener('touchstart', startPress, { passive: true });
-                card.addEventListener('mouseup', endPress);
-                card.addEventListener('touchend', endPress);
-
-                card.addEventListener('click', () => { if (!s.dropped) dropStudent(s.id, card); });
+                card.addEventListener('click', () => {
+                    if (!s.dropped) {
+                        s.dropped = true;
+                        s.count = currentCount;
+                        card.classList.add('dropped');
+                        card.querySelector('.s-score').textContent = `${s.count}회`;
+                    }
+                });
                 grid.appendChild(card);
             });
         }
 
-        function dropStudent(id, el) {
-            const s = studentsData.find(x => x.id === id);
-            s.count = currentCount;
-            s.dropped = true;
-            el.classList.add('dropped');
-            el.querySelector('.s-score').textContent = s.count;
-        }
-
-        function editScore(id, el) {
-            const s = studentsData.find(x => x.id === id);
-            const val = prompt(`${id}번 학생의 기록을 입력하세요:`, s.count ?? currentCount);
-            if (val !== null && !isNaN(val) && val.trim() !== '') {
-                s.count = parseInt(val);
-                s.dropped = true;
-                el.classList.add('dropped');
-                el.querySelector('.s-score').textContent = s.count;
-            }
-        }
-
-        /* ===== BOTTOM CONTROLS ===== */
+        /* ===== RECORD EXPORT & MODAL ===== */
         document.getElementById('restart-btn').addEventListener('click', () => {
-            if (confirm('모든 기록을 초기화하고 처음으로 돌아갈까요?')) location.reload();
+            if (confirm('모든 데이터를 초기화하고 처음 단계로 돌아갈까요?')) location.reload();
         });
 
         document.getElementById('export-btn').addEventListener('click', () => {
-            if (audio) audio.pause();
+            isPlaying = false;
+            updatePauseButton();
+            clearInterval(timerInterval);
+
+            // 아직 진행 중인 잔류 학생들 기록 마감 일괄 매핑
+            studentsData.forEach(s => {
+                if(!s.dropped) {
+                    s.dropped = true;
+                    s.count = currentCount;
+                }
+            });
+
             const tbody = document.getElementById('result-table-body');
             tbody.innerHTML = '';
             studentsData.forEach(s => {
                 const tr = document.createElement('tr');
-                const isActive = s.count === null;
-                // 마감 직전까지 안 떨어진 남은 학생들에게 자동으로 현재 기록 부여
-                if (isActive) {
-                    s.count = currentCount;
-                    s.dropped = true;
-                }
                 tr.innerHTML = `
-                    <td class="td-num">${s.id}번</td>
+                    <td class="td-num">${s.id}번 학생</td>
                     <td class="td-score">${s.count}회</td>
                 `;
                 tbody.appendChild(tr);
             });
+
             document.getElementById('result-modal').classList.add('visible');
         });
 
+        // 결과 모달 종료 시 전체 초기 리로드
         document.getElementById('close-modal-btn').addEventListener('click', () => {
-            document.getElementById('result-modal').classList.remove('visible');
-            if (audio) {
-                audio.play().catch(() => {});
-            }
+            location.reload();
         });
 
-        /* PAPS 연동 등급 간이 측정 로직 */
-        function getPapsGrade(count) {
-            if (count >= 50) return "1등급 (최우수)";
-            if (count >= 35) return "2등급 (우수)";
-            if (count >= 21) return "3등급 (보통)";
-            if (count >= 10) return "4등급 (적극추천)";
-            return "5등급 (기초체력부족)";
-        }
+        /* ===== 이메일 연동 핵심 로직 (SheetJS로 바이너리 엑셀 가공 후 전송) ===== */
+        document.getElementById('btn-trigger-email').addEventListener('click', async () => {
+            const emailAddr = modalEmailInput.value.trim();
+            const statusDiv = document.getElementById('email-status-msg');
 
-        /* ===== 4. 핵심 비즈니스 로직 - 엑셀 생성 및 Vercel API 발송 킷 ===== */
-        async function generateAndSendExcelEmail() {
-            const emailInput = document.getElementById('result-email-receiver');
-            const targetEmail = emailInput.value.trim();
-
-            if (!targetEmail) {
-                alert("기록을 받을 이메일 주소를 형식에 맞게 채워주세요.");
-                emailInput.focus();
+            if (!emailAddr || !emailAddr.includes('@')) {
+                alert('전송받을 상대 이메일 주소를 올바르게 채워주세요.');
                 return;
             }
 
-            const sendBtn = document.getElementById('email-send-btn');
-            const statusBox = document.getElementById('email-status-text');
-
-            // 버튼 및 정보창 디바운스 잠금
-            sendBtn.disabled = true;
-            sendBtn.innerHTML = "<span>⚡ 데이터 패키징 및 송부 중...</span>";
-            statusBox.style.color = "var(--accent-blue)";
-            statusBox.textContent = "브라우저 엔진 내부에서 고해상도 엑셀 파일을 변환하고 있습니다.";
+            statusDiv.style.color = '#3b82f6';
+            statusDiv.textContent = '📥 결과 데이터를 분석하여 엑셀 변환을 진행하고 있습니다...';
 
             try {
-                // (아이디 순서 정독) 가상 데이터 매핑 설계
-                const excelRows = studentsData.map(student => ({
-                    "등록 순": `${student.id}번`,
-                    "측정 결과 (왕복 횟수)": student.count ?? 0,
-                    "PAPS 간이 평가 등급": getPapsGrade(student.count ?? 0),
-                    "정밀 측정 일시": new Date().toLocaleString("ko-KR")
+                // 1. SheetJS를 사용하여 실질적인 가공 엑셀 바이너리 데이터 준비
+                const sorted = [...studentsData].sort((a,b) => a.id - b.id);
+                const excelRows = sorted.map(s => ({
+                    "학생 번호": `${s.id}번`,
+                    "측정 기록 (회)": s.count,
+                    "PAPS 간이 등급": s.count >= 35 ? "우수" : s.count >= 20 ? "보통" : "기초체력부족",
+                    "측정 일자": new Date().toLocaleString('ko-KR')
                 }));
 
-                // SheetJS 워크북 생성
                 const worksheet = XLSX.utils.json_to_sheet(excelRows);
                 const workbook = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(workbook, worksheet, "PAPS 셔틀런 대장");
+                XLSX.utils.book_append_sheet(workbook, worksheet, "PAPS 셔틀런 결과");
 
-                // Base64 포맷 바이트 문자열 획득
-                const excelBase64 = XLSX.write(workbook, { bookType: 'xlsx', type: 'base64' });
-                
-                statusBox.textContent = "Vercel 서버리스 호스트를 통해 타겟 메일함으로 전송을 명령하고 있습니다...";
+                // 바이너리 암호화 Base64 추출 작업
+                const base64Excel = XLSX.write(workbook, { bookType: 'xlsx', type: 'base64' });
 
-                // Vercel Serverless Function 호출
-                // 상대 좌표 '/api/send-paps'를 가리키므로 같은 버셀 도메인 상에서 완벽 동보 작동 보증!
-                const res = await fetch('/api/send-paps', {
+                statusDiv.textContent = '🚀 Vercel 통합 이메일 게이트웨이 송신 처리 중...';
+
+                // 2. 버셀 백엔드 엔드포인트 호출 (/api/send-email 혹은 /api/send-paps API 선택)
+                const endpoint = '/api/send-email'; 
+                const response = await fetch(endpoint, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        email: targetEmail,
-                        xlsxBase64: excelBase64,
-                        filename: `PAPS_ShuttleRun_Result_${new Date().toISOString().slice(0, 10)}.xlsx`,
-                        title: `[PAPS 측정 대장] 왕복오래달리기 셔틀런 측정 통계표`,
-                        studentCount: studentsData.length
+                        email: emailAddr,
+                        xlsxBase64: base64Excel,
+                        filename: `PAPS_셔틀런_결과표_${new Date().toISOString().slice(0, 10)}.xlsx`,
+                        title: `[바다쌤 체육교실] PAPS 왕복오래달리기 전체 기록안내 엑셀파일`,
+                        studentCount: excelRows.length
                     })
                 });
 
-                const apiResult = await res.json();
+                const responseText = await response.text();
+                let result;
+                try {
+                    result = JSON.parse(responseText);
+                } catch(pe) {
+                    throw new Error(
+                        `⚠️ Vercel 오류 발생! (새로운 API 파일 등록 후, Vercel 대시보드에서 'Redeploy'를 꼭 눌러서 동기화하셔야 합니다!)`
+                    );
+                }
 
-                if (res.ok && apiResult.success) {
-                    if (apiResult.preview) {
-                        statusBox.style.color = "#f59e0b";
-                        statusBox.textContent = "⚠️ Vercel 환경변수(SMTP_USER, SMTP_PASS)가 부재하여 시뮬레이션을 완료했습니다!";
-                        alert(apiResult.message);
-                    } else {
-                        statusBox.style.color = "var(--success)";
-                        statusBox.textContent = "✓ 지정된 이메일함으로 엑셀 대장이 빈틈없이 도달하였습니다.";
-                        alert("🎉 해당 주소로 엑셀 가득 담긴 메일이 신속하게 통과 전송 완료되었습니다!");
-                    }
+                if (response.ok && result.success) {
+                    statusDiv.style.color = '#10b981';
+                    statusDiv.textContent = result.preview 
+                        ? '🧪 (시뮬레이션 가상전송 완료) Vercel 환경변수 설정이 끝나면 실 전송이 시작됩니다.'
+                        : '🔥 전송 성공! 지정하신 이메일 메일함으로 엑셀 보고서 발송이 완료되었습니다.';
+                    alert('성공적으로 메일이 발송되었습니다!');
                 } else {
-                    throw new Error(apiResult.error || "서버 응답 거부");
+                    throw new Error(result.error || result.detail || '메일 발송 거절됨');
                 }
 
             } catch (err) {
-                console.error("발송 불발 에러 리포트:", err);
-                statusBox.style.color = "var(--accent-red)";
-                statusBox.textContent = `전송 실패: ${err.message || '네트워크 이상 또는 구글 보안 차단'}`;
-                alert(`⚠️ 발송 실패!\n원인: ${err.message || '인터넷 연결을 확인하고, 구글 16자리 앱비밀번호에 공백이 없는가 등을 확인해주세요.'}`);
-            } finally {
-                sendBtn.disabled = false;
-                sendBtn.innerHTML = "<span>📬 엑셀 리포트 이메일로 전송</span>";
+                console.error(err);
+                statusDiv.style.color = '#ef4444';
+                statusDiv.textContent = `❌ 발송 실패!\n원인: ${err.message}`;
+                alert(`⚠️ 발송 실패!\n\n원인: ${err.message || '알 수 없는 서버 환경 네트워크 장애'}`);
             }
-        }
+        });
     </script>
 </body>
 </html>

@@ -573,6 +573,8 @@
             <div class="email-send-area">
                 <label for="modal-email">수신받을 이메일 주소</label>
                 <input type="email" id="modal-email" class="input-email" style="margin-bottom:10px; padding:10px; font-size:14px;" placeholder="example@naver.com">
+                <label for="modal-subject">이메일 제목</label>
+                <input type="text" id="modal-subject" class="input-email" style="margin-bottom:10px; padding:10px; font-size:14px;" placeholder="이메일 제목을 입력해주세요.">
                 <button id="btn-trigger-email" class="btn-email-submit">📧 엑셀 리포트 이메일로 전송</button>
                 <div id="email-status-msg" class="email-status-text"></div>
             </div>
@@ -809,6 +811,10 @@
                 tbody.appendChild(tr);
             });
 
+            // 이메일 제목 초기값 설정
+            const today = new Date().toISOString().slice(0, 10);
+            document.getElementById('modal-subject').value = `[바다쌤 체육교실] PAPS 왕복오래달리기 기록 (${today})`;
+
             document.getElementById('result-modal').classList.add('visible');
         });
 
@@ -820,6 +826,7 @@
         /* ===== 이메일 연동 로직 (SheetJS로 바이너리 엑셀 가공 후 전송) ===== */
         document.getElementById('btn-trigger-email').addEventListener('click', async () => {
             const emailAddr = modalEmailInput.value.trim();
+            const emailSubject = document.getElementById('modal-subject').value.trim() || `[바다쌤 체육교실] PAPS 왕복오래달리기 전체 기록안내 엑셀파일`;
             const statusDiv = document.getElementById('email-status-msg');
 
             if (!emailAddr || !emailAddr.includes('@')) {
@@ -858,7 +865,7 @@
                         email: emailAddr,
                         xlsxBase64: base64Excel,
                         filename: `PAPS_셔틀런_결과표_${new Date().toISOString().slice(0, 10)}.xlsx`,
-                        title: `[바다쌤 체육교실] PAPS 왕복오래달리기 전체 기록안내 엑셀파일`,
+                        title: emailSubject,
                         studentCount: excelRows.length
                     })
                 });

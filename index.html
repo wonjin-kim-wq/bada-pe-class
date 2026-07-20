@@ -22,21 +22,21 @@
     <!-- 4. 단 하나로 합쳐진 무결점 CSS 스타일 보드 -->
     <style>
         :root {
-            --blue-50: #f0f6ff;
-            --blue-100: #e0edff;
+            --blue-50: rgba(49, 130, 246, 0.15);
+            --blue-100: rgba(49, 130, 246, 0.25);
             --blue-200: #c2daff;
             --blue-400: #5c9bfe;
             --blue-500: #3182F6;
             --blue-600: #2563eb;
             --blue-700: #1d4ed8;
-            --slate-50: #F9FAFB;
-            --slate-100: #F2F4F6;
-            --slate-400: #8B95A1;
-            --slate-500: #4E5968;
-            --slate-800: #333D4B;
-            --slate-900: #191F28;
-            --surface: #FFFFFF;
-            --border: #E5E8EB;
+            --slate-50: #0f172a;
+            --slate-100: #1e293b;
+            --slate-400: #94a3b8;
+            --slate-500: #cbd5e1;
+            --slate-800: #f1f5f9;
+            --slate-900: #f8fafc;
+            --surface: #1e293b;
+            --border: #334155;
         }
 
         * {
@@ -226,7 +226,7 @@
         .card {
             position: relative;
             background: var(--surface);
-            border: 1px solid transparent;
+            border: 1px solid var(--border);
             border-radius: 24px;
             padding: 36px 28px 32px;
             text-decoration: none;
@@ -234,14 +234,15 @@
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.04);
+            transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
             cursor: pointer;
         }
 
         .card:hover {
             transform: translateY(-4px);
-            box-shadow: 0 12px 24px rgba(0,0,0,0.08);
+            border-color: var(--blue-500);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.4);
         }
 
         .card-glow, .card-bg-icon {
@@ -315,8 +316,8 @@
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
-            background: rgba(25, 31, 40, 0.9);
-            color: white;
+            background: rgba(255, 255, 255, 0.9);
+            color: #191f28;
             padding: 12px 24px;
             border-radius: 12px;
             font-size: 0.95rem;
@@ -489,7 +490,7 @@
             display: none;
             align-items: center;
             justify-content: center;
-            background: rgba(255, 255, 255, 0.8);
+            background: rgba(15, 23, 42, 0.8);
             backdrop-filter: blur(8px);
         }
 

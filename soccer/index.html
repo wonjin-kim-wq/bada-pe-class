@@ -21,7 +21,7 @@
         /* ===== 리셋 & 기본 ===== */
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans KR', sans-serif;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
             user-select: none;
             overflow: hidden;
             background-color: #111;
@@ -93,7 +93,7 @@
         .text-score { font-size: 20rem; }
         .text-7xl { font-size: 4.5rem; }
         .font-bold { font-weight: 700; }
-        .font-mono { font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace; }
+        .font-mono { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
         .opacity-80 { opacity: 0.8; }
         .tracking-widest { letter-spacing: 0.1em; }
         .underline { text-decoration: underline; }
@@ -270,7 +270,7 @@
 
             <!-- 축구 스톱워치 영역 -->
             <div id="stopwatchContainer" class="hidden-view" style="display:flex;flex-direction:column;align-items:center;">
-                <div style="font-size:3rem;font-family:monospace;font-weight:700;color:#4ade80;cursor:pointer;" id="stopwatchDisplay" onclick="toggleStopwatch()">00:00</div>
+                <div style="font-size:3rem;font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;font-weight:700;color:#4ade80;cursor:pointer;" id="stopwatchDisplay" onclick="toggleStopwatch()">00:00</div>
                 <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
                     <button onclick="toggleStopwatch()" class="ctrl-btn" style="font-size:0.875rem;background-color:#374151;padding:0.25rem 0.75rem;border-radius:0.25rem;">재생/일시정지</button>
                     <button onclick="resetStopwatch()" class="ctrl-btn" style="font-size:0.875rem;background-color:#ef4444;padding:0.25rem 0.75rem;border-radius:0.25rem;">리셋</button>
@@ -279,7 +279,7 @@
 
             <!-- 농구 타이머 영역 -->
             <div id="timerContainer" class="hidden-view" style="display:flex;flex-direction:column;align-items:center;">
-                <div style="font-size:3rem;font-family:monospace;font-weight:700;color:#facc15;cursor:pointer;" id="mainClock" onclick="toggleClock()">00:00</div>
+                <div style="font-size:3rem;font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;font-weight:700;color:#facc15;cursor:pointer;" id="mainClock" onclick="toggleClock()">00:00</div>
                 <div style="display:flex;gap:0.5rem;margin-top:0.5rem;">
                     <button onclick="toggleClock()" class="ctrl-btn" style="font-size:0.875rem;background-color:#374151;padding:0.25rem 0.5rem;border-radius:0.25rem;">재생/일시정지</button>
                     <button onclick="addTime(5)" class="ctrl-btn" style="font-size:0.875rem;background-color:#374151;padding:0.25rem 0.5rem;border-radius:0.25rem;">+5분</button>
@@ -295,7 +295,7 @@
         <!-- 중앙 농구 샷클락 -->
         <div id="shotClockContainer" class="hidden-view shot-clock-box">
             <div style="font-size:0.875rem;color:#d1d5db;margin-bottom:0.25rem;">공격 시간 (Shot Clock)</div>
-            <div id="shotClock" style="font-size:4.5rem;font-family:monospace;font-weight:700;color:#ef4444;cursor:pointer;display:inline-block;" onclick="resetShotClock()">24.0</div>
+            <div id="shotClock" style="font-size:4.5rem;font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;font-weight:700;color:#ef4444;cursor:pointer;display:inline-block;" onclick="resetShotClock()">24.0</div>
             <button onclick="resetShotClock()" class="ctrl-btn" style="margin-top:0.5rem;font-size:0.875rem;background-color:#374151;padding:0.5rem 1rem;border-radius:0.25rem;" id="shotClockBtn">리셋</button>
         </div>
 

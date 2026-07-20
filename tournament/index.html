@@ -215,23 +215,9 @@
 
   .generate-btn:active { transform: translateY(0); }
 
-  .home-link {
-    display: inline-block;
-    margin-top: 40px;
-    color: var(--text-dim);
-    text-decoration: none;
-    font-size: 14px;
-    letter-spacing: 1px;
-    transition: color 0.3s;
-    padding: 8px 16px;
-    border: 1px solid transparent;
-    border-radius: 8px;
-  }
+  
 
-  .home-link:hover {
-    color: var(--blue);
-    border-color: var(--blue-dim);
-  }
+  
 
   /* ── BRACKET SCREEN ── */
   #bracket-screen {
@@ -442,6 +428,26 @@
     .counter-btn { width: 46px; height: 46px; font-size: 22px; }
     .round { min-width: 160px; }
     .match { width: 150px; }
+  }
+
+  /* ── 홈으로 돌아가기 버튼 (공통) ── */
+  .home-link {
+    display: inline-block;
+    margin-top: 40px;
+    color: #6e6e85;
+    text-decoration: none;
+    font-size: 14px;
+    letter-spacing: 1px;
+    transition: color 0.3s, border-color 0.3s;
+    padding: 8px 16px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+  }
+  .home-link:hover {
+    color: #4895ef;
+    border-color: rgba(72, 149, 239, 0.15);
   }
 </style>
 </head>

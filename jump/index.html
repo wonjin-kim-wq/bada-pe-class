@@ -172,16 +172,8 @@
     50% { transform: scale(1.4); }
   }
 
-  .home-link {
-    margin-top: 50px;
-    color: var(--text-dim);
-    font-size: 0.85rem;
-    text-decoration: none;
-    letter-spacing: 1px;
-    transition: color 0.3s;
-    cursor: pointer;
-  }
-  .home-link:hover { color: var(--text); }
+  
+  
 
   .countdown-num {
     font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -405,6 +397,26 @@
     0% { transform: scale(0.3); opacity: 0.8; }
     100% { transform: scale(2); opacity: 0; }
   }
+
+  /* ── 홈으로 돌아가기 버튼 (공통) ── */
+  .home-link {
+    display: inline-block;
+    margin-top: 40px;
+    color: #6e6e85;
+    text-decoration: none;
+    font-size: 14px;
+    letter-spacing: 1px;
+    transition: color 0.3s, border-color 0.3s;
+    padding: 8px 16px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+  }
+  .home-link:hover {
+    color: #4895ef;
+    border-color: rgba(72, 149, 239, 0.15);
+  }
 </style>
 </head>
 <body>
@@ -440,7 +452,7 @@
     </button>
   </div>
 
-  <a class="home-link" href="../index.html">← 홈으로 돌아가기</a>
+  <a href="../index.html" class="home-link">← 홈으로 돌아가기</a>
 </div>
 
 <div class="screen hidden" id="countdownScreen">
@@ -486,7 +498,7 @@
     수행한 동작: 0개
   </div>
   <button class="restart-btn" onclick="goHome()">다시 하기</button>
-  <a class="home-link" href="../index.html" style="margin-top:24px">← 홈으로 돌아가기</a>
+  <a href="../index.html" class="home-link">← 홈으로 돌아가기</a>
 </div>
 
 <!-- ★ YouTube 플레이어 div 및 스크립트 완전 제거 -->

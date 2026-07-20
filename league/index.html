@@ -194,19 +194,9 @@
             margin-bottom: 0;
         }
 
-        .back-link {
-            display: inline-block;
-            margin-top: 40px;
-            color: var(--text-muted);
-            text-decoration: none;
-            transition: color 0.2s;
-            cursor: pointer;
-        }
+        
 
-        .back-link:hover {
-            color: white;
-            text-decoration: underline;
-        }
+        
 
         .league-container {
             margin-top: 30px;
@@ -475,7 +465,27 @@
         .rank-changed {
             animation: rankShift 0.6s ease;
         }
-    </style>
+    
+  /* ── 홈으로 돌아가기 버튼 (공통) ── */
+  .home-link {
+    display: inline-block;
+    margin-top: 40px;
+    color: #6e6e85;
+    text-decoration: none;
+    font-size: 14px;
+    letter-spacing: 1px;
+    transition: color 0.3s, border-color 0.3s;
+    padding: 8px 16px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+  }
+  .home-link:hover {
+    color: #4895ef;
+    border-color: rgba(72, 149, 239, 0.15);
+  }
+</style>
 </head>
 <body>
 
@@ -505,7 +515,7 @@
             </div>
             
             <br>
-            <a class="back-link" href="../index.html">&larr; 홈으로 돌아가기</a>
+            <a href="../index.html" class="home-link">← 홈으로 돌아가기</a>
         </div>
 
         <!-- 리그전 화면 -->

@@ -241,8 +241,28 @@
         }
 
         /* 홈 링크 */
-        .home-link { color: #9ca3af; font-size: 1.25rem; text-decoration: underline; padding: 1rem; margin-top: 3rem; }
-    </style>
+        
+    
+  /* ── 홈으로 돌아가기 버튼 (공통) ── */
+  .home-link {
+    display: inline-block;
+    margin-top: 40px;
+    color: #6e6e85;
+    text-decoration: none;
+    font-size: 14px;
+    letter-spacing: 1px;
+    transition: color 0.3s, border-color 0.3s;
+    padding: 8px 16px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+  }
+  .home-link:hover {
+    color: #4895ef;
+    border-color: rgba(72, 149, 239, 0.15);
+  }
+</style>
 </head>
 <body>
 
@@ -258,7 +278,7 @@
             <button onclick="startSport('badminton')" class="menu-btn" style="background-color:#2563eb;border-radius:1.5rem;padding:3rem;font-size:2.25rem;font-weight:700;">🏸 배드민턴</button>
             <button onclick="startSport('volleyball')" class="menu-btn" style="background-color:#ca8a04;border-radius:1.5rem;padding:3rem;font-size:2.25rem;font-weight:700;">🏐 배구</button>
         </div>
-        <a href="../index.html" class="home-link">홈으로 돌아가기</a>
+        <a href="../index.html" class="home-link">← 홈으로 돌아가기</a>
     </div>
 
     <!-- 2. 점수판 공통 레이아웃 -->

@@ -918,6 +918,26 @@ body.game-active .subtitle {
 body.game-active .container {
   padding: 10px 20px;
 }
+
+  /* ── 홈으로 돌아가기 버튼 (공통) ── */
+  .home-link {
+    display: inline-block;
+    margin-top: 40px;
+    color: #6e6e85;
+    text-decoration: none;
+    font-size: 14px;
+    letter-spacing: 1px;
+    transition: color 0.3s, border-color 0.3s;
+    padding: 8px 16px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    text-align: center;
+  }
+  .home-link:hover {
+    color: #4895ef;
+    border-color: rgba(72, 149, 239, 0.15);
+  }
 </style>
 </head>
 <body>
@@ -1020,7 +1040,7 @@ body.game-active .container {
 
     <button class="btn btn-primary" id="startBtn" onclick="startGame()">🎴 역할 뽑기 시작</button>
 
-    <a href="../index.html" style="display:block; text-align:center; margin-top:25px; color:var(--text-secondary); font-size:1.4rem; text-decoration:none; padding:10px; transition:color 0.3s;" onmouseover="this.style.color='var(--accent-red)'" onmouseout="this.style.color='var(--text-secondary)'">← 홈으로 돌아가기</a>
+    <a href="../index.html" class="home-link">← 홈으로 돌아가기</a>
   </div>
 
   <div class="screen" id="drawScreen">
